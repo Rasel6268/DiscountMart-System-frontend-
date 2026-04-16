@@ -12,7 +12,7 @@ export default function PublicLayout({ children }) {
        <Navbar/>
 
         {/* Page content */}
-        <main className="flex-1 p-6 bg-gray-40">
+        <main className="flex-1 bg-gray-40">
           {children}
         </main>
 
