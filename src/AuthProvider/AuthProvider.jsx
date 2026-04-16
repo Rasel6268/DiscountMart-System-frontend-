@@ -44,7 +44,8 @@ const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
      const result = await api.post("/auth/register", { name, email, password });
-     console.log(result);
+     
+      return result.data;
     } catch (error) {
       console.error("Registration error:", error);
     } finally {

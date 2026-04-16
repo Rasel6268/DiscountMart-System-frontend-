@@ -21,7 +21,7 @@ const Navbar = () => {
   const [openCategoriesDropdown, setOpenCategoriesDropdown] = useState(false);
   const userModelRef = useRef(null);
   const categoriesDropdownRef = useRef(null);
-  const isAuthenticated = true;
+  const isAuthenticated = false; 
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -49,9 +49,9 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-gradient-to-r from-gray-900 to-gray-800 shadow-2xl">
+    <header className="sticky top-0 z-50 bg-linear-to-r from-gray-900 to-gray-800 shadow-2xl">
       {/* Announcement Bar */}
-      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white py-2.5 px-4 text-center text-sm font-medium">
+      <div className="bg-linear-to-r from-amber-600 to-amber-700 text-white py-2.5 px-4 text-center text-sm font-medium">
         <div className="flex items-center justify-center gap-4 flex-wrap">
           <span className="flex items-center gap-1">
             🎉 Eid Special Offer
@@ -70,14 +70,10 @@ const Navbar = () => {
       <div className="w-11/12 mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <img
-            src="/icon.png"
-            alt="Logo"
-            className="w-12 h-12 object-contain group-hover:scale-105 transition-transform duration-300"
-          />
+          
           <div>
             <span className="text-sm sm:text-base md:text-lg lg:text-2xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-              AIS DiscountMart
+              DiscountMart
             </span>
             <p className="text-[10px] text-amber-500 hidden sm:block">Premium Leather & Fusion</p>
           </div>
@@ -178,7 +174,7 @@ const Navbar = () => {
 
               {openUserModel && (
                 <div className="absolute right-0 mt-2 w-72 bg-gray-800 shadow-2xl rounded-xl border border-gray-700 overflow-hidden z-50">
-                  <div className="bg-gradient-to-r from-amber-900/50 to-gray-800 p-4 border-b border-gray-700 flex items-center gap-3">
+                  <div className="bg-linear-to-r from-amber-900/50 to-gray-800 p-4 border-b border-gray-700 flex items-center gap-3">
                     <img
                       src="/user-avatar.jpg"
                       alt="User Avatar"
@@ -225,14 +221,14 @@ const Navbar = () => {
           ) : (
             <div className="hidden lg:flex gap-2">
               <Link
-                href="/user/login"
+                href="/auth/login"
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 transition-all duration-300"
               >
                 <LogIn className="w-4 h-4" /> Login
               </Link>
               <Link
-                href="/user/register"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all duration-300 shadow-lg"
+                href="/auth/register"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition-all duration-300 shadow-lg"
               >
                 <UserRoundPlus className="w-4 h-4" /> Register
               </Link>
@@ -346,15 +342,15 @@ const Navbar = () => {
             ) : (
               <div className="mt-2 border-t border-gray-700 pt-2 flex flex-col gap-2">
                 <Link
-                  href="/user/login"
+                  href="/auth/login"
                   className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
                   onClick={toggleMobileMenu}
                 >
                   <LogIn className="w-4 h-4" /> Login
                 </Link>
                 <Link
-                  href="/user/register"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition text-center justify-center"
+                  href="/auth/register"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition text-center justify-center"
                   onClick={toggleMobileMenu}
                 >
                   <UserRoundPlus className="w-4 h-4" /> Register

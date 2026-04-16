@@ -61,14 +61,10 @@ const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
           </button>
           
           <Link href="/dashboard" className="flex items-center gap-2 group">
-            <img 
-              src="/icon.png" 
-              alt="Logo" 
-              className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-105" 
-            />
+        
             <div className="hidden sm:block">
               <span className="text-sm font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-                AIS DiscountMart
+                DiscountMart
               </span>
               <p className="text-[10px] text-amber-500">Admin Panel</p>
             </div>
