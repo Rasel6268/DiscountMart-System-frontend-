@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IoIosClose, IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { useState } from "react";
+import { IoIosClose, IoIosArrowBack, IoIosArrowForward, IoIosArrowDown } from "react-icons/io";
 import { FaProductHunt, FaUser, FaCog } from "react-icons/fa";
 import {
   MdBorderAll,
@@ -11,6 +12,7 @@ import {
   MdPayment,
   MdDashboard,
   MdDiscount,
+  MdChevronRight,
 } from "react-icons/md";
 import { HiOutlineLogout } from "react-icons/hi";
 import { GiLeatherBoot, GiHandbag } from "react-icons/gi";
@@ -27,54 +29,96 @@ const navigation = [
     href: "/categories",
     icon: <MdCategory className="text-lg" />,
     color: "text-emerald-400",
+    subItems: [
+      { name: "All Categories", href: "/categories", color: "text-emerald-300" },
+      { name: "Add Category", href: "/categories/add", color: "text-emerald-300" },
+      { name: "Manage Categories", href: "/categories/manage", color: "text-emerald-300" },
+    ],
   },
   {
     name: "Brands",
     href: "/brands",
     icon: <MdBrandingWatermark className="text-lg" />,
     color: "text-blue-400",
+    subItems: [
+      { name: "All Brands", href: "/brands", color: "text-blue-300" },
+      { name: "Add Brand", href: "/brands/add", color: "text-blue-300" },
+      { name: "Manage Brands", href: "/brands/manage", color: "text-blue-300" },
+    ],
   },
   {
     name: "Products",
     href: "/products",
     icon: <FaProductHunt className="text-lg" />,
     color: "text-purple-400",
+    subItems: [
+      { name: "All Products", href: "/products", color: "text-purple-300" },
+      { name: "Add Product", href: "/products/add", color: "text-purple-300" },
+      { name: "Manage Products", href: "/products/manage", color: "text-purple-300" },
+      { name: "Product Reviews", href: "/products/reviews", color: "text-purple-300" },
+      { name: "Product Stock", href: "/products/stock", color: "text-purple-300" },
+    ],
   },
   {
     name: "Discount Offers",
     href: "/discounts",
     icon: <MdDiscount className="text-lg" />,
     color: "text-red-400",
+    subItems: [
+      { name: "Active Discounts", href: "/discounts/active", color: "text-red-300" },
+      { name: "Add Discount", href: "/discounts/add", color: "text-red-300" },
+    ],
   },
   {
     name: "Users",
     href: "/users",
     icon: <FaUser className="text-lg" />,
     color: "text-cyan-400",
+    subItems: [
+      { name: "All Users", href: "/users", color: "text-cyan-300" },
+      { name: "Add User", href: "/users/add", color: "text-cyan-300" },
+    ],
   },
   {
     name: "Delivery",
     href: "/delivery_cost",
     icon: <MdDeliveryDining className="text-lg" />,
     color: "text-orange-400",
+    subItems: [
+      { name: "Delivery Settings", href: "/delivery_cost/settings", color: "text-orange-300" },
+      { name: "Delivery Zones", href: "/delivery_cost/zones", color: "text-orange-300" },
+    ],
   },
   {
     name: "Orders",
     href: "/orders",
     icon: <MdBorderAll className="text-lg" />,
     color: "text-indigo-400",
+    subItems: [
+      { name: "All Orders", href: "/orders", color: "text-indigo-300" },
+      { name: "Pending Orders", href: "/orders/pending", color: "text-indigo-300" },
+      { name: "Completed Orders", href: "/orders/completed", color: "text-indigo-300" },
+    ],
   },
   {
     name: "Transaction",
     href: "/transaction",
     icon: <MdPayment className="text-lg" />,
     color: "text-green-400",
+    subItems: [
+      { name: "All Transactions", href: "/transaction", color: "text-green-300" },
+      { name: "Completed Payments", href: "/transaction/completed", color: "text-green-300" },
+    ],
   },
   {
     name: "Settings",
     href: "/settings",
     icon: <FaCog className="text-lg" />,
     color: "text-gray-400",
+    subItems: [
+      { name: "General Settings", href: "/settings/general", color: "text-gray-300" },
+      { name: "Payment Settings", href: "/settings/payment", color: "text-gray-300" },
+    ],
   },
 ];
 
@@ -85,6 +129,18 @@ export default function Sidebar({
   onMobileClose,
 }) {
   const pathname = usePathname();
+  const [openSubMenus, setOpenSubMenus] = useState({});
+
+  const toggleSubMenu = (itemName) => {
+    setOpenSubMenus((prev) => ({
+      ...prev,
+      [itemName]: !prev[itemName],
+    }));
+  };
+
+  const isSubItemActive = (subItems) => {
+    return subItems?.some((subItem) => pathname === subItem.href);
+  };
 
   return (
     <>
@@ -99,15 +155,33 @@ export default function Sidebar({
       {/* Sidebar */}
       <div
         className={`
-          fixed lg:relative inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transition-all duration-300 ease-in-out
+          fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transition-all duration-300 ease-in-out h-screen overflow-y-auto
           ${isOpen ? "w-72" : "lg:w-20"}
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
+        style={{ scrollbarWidth: "thin" }}
       >
+        {/* Custom Scrollbar Styles */}
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            width: 5px;
+          }
+          div::-webkit-scrollbar-track {
+            background: #374151;
+          }
+          div::-webkit-scrollbar-thumb {
+            background: #f59e0b;
+            border-radius: 5px;
+          }
+          div::-webkit-scrollbar-thumb:hover {
+            background: #d97706;
+          }
+        `}</style>
+
         {/* Sidebar Header */}
         <div
-          className={`flex items-center justify-between h-16 px-5 bg-gradient-to-r from-amber-800 to-amber-900 transition-all duration-300 ${!isOpen && "lg:justify-center lg:px-3"}`}
+          className={`sticky top-0 z-10 flex items-center justify-between h-16 px-5 bg-gradient-to-r from-amber-800 to-amber-900 transition-all duration-300 ${!isOpen && "lg:justify-center lg:px-3"}`}
         >
           {isOpen ? (
             <div className="flex items-center gap-2">
@@ -134,31 +208,29 @@ export default function Sidebar({
             onClick={onMobileClose}
             className="lg:hidden p-1 rounded-md hover:bg-amber-700 transition-colors text-white"
           >
-            {/* <IoIosClose className="text-2xl" /> */}
+            <IoIosClose className="text-2xl" />
           </button>
         </div>
 
-        {/* Admin Profile Summary - Collapsible */}
+        {/* Admin Profile Summary - Sticky */}
         {isOpen ? (
-          <div className="p-4 border-b border-gray-700">
+          <div className="sticky top-16 z-10 p-4 border-b border-gray-700 bg-gray-900">
             <div className="flex items-center gap-3 bg-gray-800/50 rounded-xl p-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
                 <span className="text-white font-bold text-lg">AD</span>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-white">Admin User</p>
-                <p className="text-xs text-gray-400">
-                  admin@aisdiscountmart.com
-                </p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">Admin User</p>
+                <p className="text-xs text-gray-400 truncate">admin@aisdiscountmart.com</p>
                 <div className="flex items-center gap-1 mt-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                   <span className="text-xs text-green-400">Online</span>
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="p-3 border-b border-gray-700 flex justify-center">
+          <div className="sticky top-16 z-10 p-3 border-b border-gray-700 flex justify-center bg-gray-900">
             <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-lg">AD</span>
             </div>
@@ -167,57 +239,107 @@ export default function Sidebar({
 
         {/* Navigation */}
         <nav
-          className={`mt-6 px-3 overflow-y-auto h-[calc(100vh-280px)] transition-all duration-300 ${!isOpen && "lg:px-2"}`}
+          className={`mt-6 px-3 overflow-y-auto transition-all duration-300 pb-24`}
+          style={{ height: "calc(100vh - 160px)" }}
         >
           <div className="space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
+              const hasSubItems = item.subItems && item.subItems.length > 0;
+              const isSubMenuOpen = openSubMenus[item.name];
+              const isAnySubItemActive = isSubItemActive(item.subItems);
+
               return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`
-                    flex items-center rounded-lg transition-all duration-300 group
-                    ${isOpen ? "px-3 py-2.5 gap-3" : "lg:px-2 lg:py-3 lg:justify-center"}
-                    ${
-                      isActive
-                        ? "bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-400 border-r-2 border-amber-500"
-                        : "text-gray-400 hover:bg-gray-800 hover:text-amber-400"
-                    }
-                  `}
-                  onClick={() => onMobileClose?.()}
-                  title={!isOpen ? item.name : ""}
-                >
-                  <span
-                    className={`${item.color} group-hover:text-amber-400 transition ${!isOpen && "lg:text-xl"}`}
+                <div key={item.name}>
+                  {/* Main Menu Item */}
+                  <Link
+                    href={item.href}
+                    onClick={(e) => {
+                      if (hasSubItems && isOpen) {
+                        e.preventDefault();
+                        toggleSubMenu(item.name);
+                      } else if (hasSubItems && !isOpen) {
+                        e.preventDefault();
+                        onToggle();
+                        setTimeout(() => {
+                          toggleSubMenu(item.name);
+                        }, 300);
+                      } else {
+                        onMobileClose?.();
+                      }
+                    }}
+                    className={`
+                      flex items-center rounded-lg transition-all duration-300 group
+                      ${isOpen ? "px-3 py-2.5 gap-3" : "lg:px-2 lg:py-3 lg:justify-center"}
+                      ${
+                        isActive || isAnySubItemActive
+                          ? "bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-400"
+                          : "text-gray-400 hover:bg-gray-800 hover:text-amber-400"
+                      }
+                    `}
+                    title={!isOpen ? item.name : ""}
                   >
-                    {item.icon}
-                  </span>
-                  {isOpen && (
-                    <>
-                      <span className="text-sm font-medium flex-1">
-                        {item.name}
-                      </span>
-                      {item.name === "Discount Offers" && (
-                        <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                          HOT
+                    <span
+                      className={`${item.color} group-hover:text-amber-400 transition ${!isOpen && "lg:text-xl"}`}
+                    >
+                      {item.icon}
+                    </span>
+                    {isOpen && (
+                      <>
+                        <span className="text-sm font-medium flex-1">
+                          {item.name}
                         </span>
-                      )}
-                      {item.name === "Fusion Collection" && (
-                        <span className="bg-pink-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                          NEW
-                        </span>
-                      )}
-                    </>
+                        {hasSubItems && (
+                          <span className="text-gray-500">
+                            {isSubMenuOpen ? (
+                              <IoIosArrowDown className="text-xs" />
+                            ) : (
+                              <MdChevronRight className="text-sm" />
+                            )}
+                          </span>
+                        )}
+                        {item.name === "Discount Offers" && (
+                          <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">
+                            HOT
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </Link>
+
+                  {/* Sub-menu Items */}
+                  {hasSubItems && isOpen && isSubMenuOpen && (
+                    <div className="ml-7 mt-1 space-y-1 border-l border-gray-700 pl-2">
+                      {item.subItems.map((subItem) => {
+                        const isSubActive = pathname === subItem.href;
+                        return (
+                          <Link
+                            key={subItem.name}
+                            href={subItem.href}
+                            className={`
+                              flex items-center px-3 py-2 rounded-lg transition-all duration-300 text-sm
+                              ${isSubActive
+                                ? "bg-amber-500/10 text-amber-400"
+                                : "text-gray-500 hover:bg-gray-800 hover:text-amber-400"
+                              }
+                            `}
+                            onClick={() => onMobileClose?.()}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-current mr-2"></span>
+                            <span className="text-xs">{subItem.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   )}
-                </Link>
+                </div>
               );
             })}
           </div>
         </nav>
 
-        {/* Logout Button - Collapsible */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700 bg-gray-900/50">
+        {/* Logout Button - Sticky Bottom */}
+        <div className="sticky bottom-0 left-0 right-0 p-4 border-t border-gray-700 bg-gray-900/95 backdrop-blur-sm">
           <button
             className={`
               flex items-center rounded-lg transition-all duration-300 w-full
@@ -239,7 +361,7 @@ export default function Sidebar({
         {/* Collapse Toggle Button - Desktop only */}
         <button
           onClick={onToggle}
-          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-amber-600 rounded-full items-center justify-center shadow-lg hover:bg-amber-500 transition-all duration-300 z-50"
+          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-amber-600 rounded-full items-center justify-center shadow-lg hover:bg-amber-500 transition-all duration-300 z-50 hover:scale-110"
         >
           {isOpen ? (
             <IoIosArrowBack className="text-white text-sm" />
