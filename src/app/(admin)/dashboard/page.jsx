@@ -41,7 +41,7 @@ import {
 } from "recharts";
 import Link from "next/link";
 import DashboardSkeleton from "@/components/layout/admin/DashboardSkeleton";
-
+import AdminRoute from "@/components/ProtectedRoute/AdminRoute";
 
 // Sample data
 const revenueData = [
@@ -77,11 +77,41 @@ const weeklyData = [
 ];
 
 const recentOrders = [
-  { id: "#ORD001", customer: "John Doe", amount: 1250, status: "delivered", date: "2024-12-20" },
-  { id: "#ORD002", customer: "Jane Smith", amount: 890, status: "processing", date: "2024-12-21" },
-  { id: "#ORD003", customer: "Mike Johnson", amount: 2100, status: "pending", date: "2024-12-21" },
-  { id: "#ORD004", customer: "Sarah Williams", amount: 567, status: "shipped", date: "2024-12-19" },
-  { id: "#ORD005", customer: "David Brown", amount: 3450, status: "delivered", date: "2024-12-18" },
+  {
+    id: "#ORD001",
+    customer: "John Doe",
+    amount: 1250,
+    status: "delivered",
+    date: "2024-12-20",
+  },
+  {
+    id: "#ORD002",
+    customer: "Jane Smith",
+    amount: 890,
+    status: "processing",
+    date: "2024-12-21",
+  },
+  {
+    id: "#ORD003",
+    customer: "Mike Johnson",
+    amount: 2100,
+    status: "pending",
+    date: "2024-12-21",
+  },
+  {
+    id: "#ORD004",
+    customer: "Sarah Williams",
+    amount: 567,
+    status: "shipped",
+    date: "2024-12-19",
+  },
+  {
+    id: "#ORD005",
+    customer: "David Brown",
+    amount: 3450,
+    status: "delivered",
+    date: "2024-12-18",
+  },
 ];
 
 const topProducts = [
@@ -124,7 +154,7 @@ const Dashboard = () => {
   }, []);
 
   if (loading) {
-    return < DashboardSkeleton/>;
+    return <DashboardSkeleton />;
   }
 
   const StatCard = ({ title, value, icon, change, changeType, color }) => (
@@ -144,7 +174,9 @@ const Dashboard = () => {
               ) : (
                 <FaArrowDown className="text-red-500 text-xs" />
               )}
-              <span className={`text-xs font-medium ${changeType === "up" ? "text-green-500" : "text-red-500"}`}>
+              <span
+                className={`text-xs font-medium ${changeType === "up" ? "text-green-500" : "text-red-500"}`}
+              >
                 {change}%
               </span>
               <span className="text-xs text-gray-400">vs last month</span>
@@ -167,7 +199,9 @@ const Dashboard = () => {
       cancelled: "bg-red-100 text-red-600",
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig[status]}`}>
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig[status]}`}
+      >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
@@ -201,7 +235,7 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <select 
+          <select
             value={selectedTimeframe}
             onChange={(e) => setSelectedTimeframe(e.target.value)}
             className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white"
@@ -258,26 +292,38 @@ const Dashboard = () => {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-amber-100 text-sm">Total Sales</p>
-              <p className="text-2xl font-bold">৳{stats.totalSales.toLocaleString()}</p>
+              <p className="text-2xl font-bold">
+                ৳{stats.totalSales.toLocaleString()}
+              </p>
             </div>
             <FaWallet className="text-3xl text-amber-200" />
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-lg p-6">
           <p className="text-gray-500 text-sm">Average Order Value</p>
-          <p className="text-2xl font-bold text-gray-800">৳{stats.averageOrderValue.toLocaleString()}</p>
-          <div className="mt-2 text-xs text-green-500">↑ 5.2% from last month</div>
+          <p className="text-2xl font-bold text-gray-800">
+            ৳{stats.averageOrderValue.toLocaleString()}
+          </p>
+          <div className="mt-2 text-xs text-green-500">
+            ↑ 5.2% from last month
+          </div>
         </div>
         <div className="bg-white rounded-xl shadow-lg p-6">
           <p className="text-gray-500 text-sm">Conversion Rate</p>
-          <p className="text-2xl font-bold text-gray-800">{stats.conversionRate}%</p>
-          <div className="mt-2 text-xs text-green-500">↑ 0.8% from last month</div>
+          <p className="text-2xl font-bold text-gray-800">
+            {stats.conversionRate}%
+          </p>
+          <div className="mt-2 text-xs text-green-500">
+            ↑ 0.8% from last month
+          </div>
         </div>
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center">
             <div>
               <p className="text-gray-500 text-sm">Pending Orders</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
+              <p className="text-2xl font-bold text-yellow-600">
+                {stats.pendingOrders}
+              </p>
             </div>
             <FaRegClock className="text-yellow-500 text-2xl" />
           </div>
@@ -290,8 +336,12 @@ const Dashboard = () => {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Revenue Overview</h3>
-              <p className="text-xs text-gray-500 mt-1">Monthly revenue for current year</p>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Revenue Overview
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Monthly revenue for current year
+              </p>
             </div>
             <FaChartLine className="text-amber-500 text-xl" />
           </div>
@@ -325,7 +375,9 @@ const Dashboard = () => {
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Orders & Profit</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Orders & Profit
+              </h3>
               <p className="text-xs text-gray-500 mt-1">Monthly comparison</p>
             </div>
           </div>
@@ -334,11 +386,29 @@ const Dashboard = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
               <YAxis yAxisId="left" stroke="#6b7280" fontSize={12} />
-              <YAxis yAxisId="right" orientation="right" stroke="#10b981" fontSize={12} />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                stroke="#10b981"
+                fontSize={12}
+              />
               <Tooltip />
               <Legend />
-              <Bar yAxisId="left" dataKey="orders" fill="#10b981" name="Orders" radius={[8, 8, 0, 0]} />
-              <Line yAxisId="right" type="monotone" dataKey="profit" stroke="#f59e0b" strokeWidth={2} name="Profit (৳)" />
+              <Bar
+                yAxisId="left"
+                dataKey="orders"
+                fill="#10b981"
+                name="Orders"
+                radius={[8, 8, 0, 0]}
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="profit"
+                stroke="#f59e0b"
+                strokeWidth={2}
+                name="Profit (৳)"
+              />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -348,7 +418,9 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Weekly Sales - Bar Chart */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-6">Weekly Sales Performance</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">
+            Weekly Sales Performance
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={weeklyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -356,15 +428,27 @@ const Dashboard = () => {
               <YAxis stroke="#6b7280" fontSize={12} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="sales" fill="#f59e0b" name="Sales (৳)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="visitors" fill="#06b6d4" name="Visitors" radius={[8, 8, 0, 0]} />
+              <Bar
+                dataKey="sales"
+                fill="#f59e0b"
+                name="Sales (৳)"
+                radius={[8, 8, 0, 0]}
+              />
+              <Bar
+                dataKey="visitors"
+                fill="#06b6d4"
+                name="Visitors"
+                radius={[8, 8, 0, 0]}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* Category Distribution - Pie Chart */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-6">Category Distribution</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">
+            Category Distribution
+          </h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -375,7 +459,9 @@ const Dashboard = () => {
                 outerRadius={100}
                 paddingAngle={5}
                 dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) =>
+                  `${name} ${(percent * 100).toFixed(0)}%`
+                }
               >
                 {categoryData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
@@ -392,7 +478,9 @@ const Dashboard = () => {
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-800">Revenue Trend</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              Revenue Trend
+            </h3>
             <p className="text-xs text-gray-500 mt-1">12 months performance</p>
           </div>
         </div>
@@ -403,21 +491,42 @@ const Dashboard = () => {
             <YAxis stroke="#6b7280" fontSize={12} />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            <Line type="monotone" dataKey="revenue" stroke="#f59e0b" strokeWidth={3} name="Revenue" dot={{ fill: "#f59e0b", r: 4 }} />
-            <Line type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={3} name="Profit" dot={{ fill: "#10b981", r: 4 }} />
+            <Line
+              type="monotone"
+              dataKey="revenue"
+              stroke="#f59e0b"
+              strokeWidth={3}
+              name="Revenue"
+              dot={{ fill: "#f59e0b", r: 4 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="profit"
+              stroke="#10b981"
+              strokeWidth={3}
+              name="Profit"
+              dot={{ fill: "#10b981", r: 4 }}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
       {/* Top Products */}
       <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-6">Top Selling Products</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-6">
+          Top Selling Products
+        </h3>
         <div className="space-y-4">
           {topProducts.map((product, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+            <div
+              key={index}
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+            >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                  <span className="text-amber-600 font-bold text-sm">#{index + 1}</span>
+                  <span className="text-amber-600 font-bold text-sm">
+                    #{index + 1}
+                  </span>
                 </div>
                 <div>
                   <p className="font-medium text-gray-800">{product.name}</p>
@@ -425,13 +534,20 @@ const Dashboard = () => {
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-semibold text-green-600">৳{product.revenue.toLocaleString()}</p>
-                <p className="text-xs text-green-500">↑ {product.growth}% growth</p>
+                <p className="font-semibold text-green-600">
+                  ৳{product.revenue.toLocaleString()}
+                </p>
+                <p className="text-xs text-green-500">
+                  ↑ {product.growth}% growth
+                </p>
               </div>
             </div>
           ))}
         </div>
-        <Link href="/products" className="mt-4 text-center text-amber-600 text-sm hover:text-amber-700 block">
+        <Link
+          href="/products"
+          className="mt-4 text-center text-amber-600 text-sm hover:text-amber-700 block"
+        >
           View All Products →
         </Link>
       </div>
@@ -441,10 +557,17 @@ const Dashboard = () => {
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Recent Orders</h3>
-              <p className="text-xs text-gray-500 mt-1">Latest transactions from your store</p>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Recent Orders
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Latest transactions from your store
+              </p>
             </div>
-            <Link href="/orders" className="text-amber-600 text-sm hover:text-amber-700 font-medium">
+            <Link
+              href="/orders"
+              className="text-amber-600 text-sm hover:text-amber-700 font-medium"
+            >
               View All Orders →
             </Link>
           </div>
@@ -453,24 +576,48 @@ const Dashboard = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Order ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {recentOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50 transition">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{order.customer}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">৳{order.amount.toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(order.status)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.date}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {order.id}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {order.customer}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">
+                    ৳{order.amount.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getStatusBadge(order.status)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {order.date}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button className="text-amber-600 hover:text-amber-700 font-medium">View</button>
+                    <button className="text-amber-600 hover:text-amber-700 font-medium">
+                      View
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -481,7 +628,10 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link href="/products/add" className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group">
+        <Link
+          href="/products/add"
+          className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-amber-100 text-sm">Quick Action</p>
@@ -490,7 +640,10 @@ const Dashboard = () => {
             <FaBoxes className="text-3xl text-amber-200 group-hover:scale-110 transition" />
           </div>
         </Link>
-        <Link href="/discounts/add" className="bg-gradient-to-r from-pink-500 to-pink-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group">
+        <Link
+          href="/discounts/add"
+          className="bg-gradient-to-r from-pink-500 to-pink-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-pink-100 text-sm">Quick Action</p>
@@ -499,7 +652,10 @@ const Dashboard = () => {
             <FaStar className="text-3xl text-pink-200 group-hover:scale-110 transition" />
           </div>
         </Link>
-        <Link href="/orders" className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group">
+        <Link
+          href="/orders"
+          className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm">Quick Action</p>

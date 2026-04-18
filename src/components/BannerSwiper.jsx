@@ -21,7 +21,7 @@ const SideBanner = () => {
       bgColor: "from-amber-800 to-amber-900",
       buttonText: "Shop Now",
       link: "/shop",
-      image: "/leather-banner-1.jpg",
+      image: "https://res.cloudinary.com/doumlnejx/image/upload/v1776515769/sassy-goodlooking-redhead-female-yellow-sweater-listen-music-white-headphones-touch-earphones_l6p8sp.jpg",
     },
     {
       id: 2,
@@ -31,7 +31,7 @@ const SideBanner = () => {
       bgColor: "from-amber-700 to-amber-800",
       buttonText: "Explore",
       link: "/shop",
-      image: "/fusion-banner.jpg",
+      image: "https://res.cloudinary.com/doumlnejx/image/upload/v1776515770/tender-romantic-dreamy-redhead-woman-winter-hat-sweater-embrace-big-cute-red-heart-sign-as-sy_sljs7f.jpg",
     },
     {
       id: 3,
@@ -41,7 +41,7 @@ const SideBanner = () => {
       bgColor: "from-amber-900 to-amber-950",
       buttonText: "Grab Deal",
       link: "/shop",
-      image: "/eid-banner.jpg",
+      image: "https://res.cloudinary.com/doumlnejx/image/upload/v1776515770/tender-romantic-dreamy-redhead-woman-winter-hat-sweater-embrace-big-cute-red-heart-sign-as-sy_sljs7f.jpg",
     },
   ];
 
@@ -71,10 +71,10 @@ const SideBanner = () => {
         {banners.map((banner) => (
           <SwiperSlide key={banner.id}>
             <div
-              className={`relative h-full min-h-[400px] md:min-h-[500px] bg-gradient-to-br ${banner.bgColor} overflow-hidden`}
+              className={`relative h-full min-h-100 md:min-h-125 bg-linear-to-br ${banner.bgColor} overflow-hidden`}
             >
               {/* Background Image */}
-              <div className="absolute inset-0 opacity-30">
+              <div className="absolute inset-0 opacity-70">
                 <Image
                   src={banner.image}
                   alt={banner.title}

@@ -20,8 +20,7 @@ import BannerSlider from "../BannerSwiper";
 import { useAuth } from "@/AuthProvider/AuthProvider";
 
 const Home = () => {
-  const {user} = useAuth()
-  console.log(user);
+  const {user,loading} = useAuth()
    return (
     <section>
       {/* Premium Hero Section */}

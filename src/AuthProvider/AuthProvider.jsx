@@ -58,11 +58,11 @@ const AuthProvider = ({ children }) => {
       const res = await api.post("/auth/login", { email, password });
       setUser(res.data.user);
       console.log(res);
-    //   if (res.data.user.role === "admin") {
-    //     router.push("/dashboard");
-    //   } else {
-    //     router.push("/dashboard");
-    //   }
+      if (res.data.user.role === "admin") {
+        router.push("/dashboard");
+      } else {
+        router.push("/profile");
+      }
 
       toast.success(`Welcome back, ${res.data.user.name}!`);
       return { success: true, user: res.data.user };
