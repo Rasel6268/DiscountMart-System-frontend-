@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronDown,
 } from "lucide-react";
+import { useAuth } from "@/AuthProvider/AuthProvider";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,7 +22,7 @@ const Navbar = () => {
   const [openCategoriesDropdown, setOpenCategoriesDropdown] = useState(false);
   const userModelRef = useRef(null);
   const categoriesDropdownRef = useRef(null);
-  const isAuthenticated = false; 
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -72,7 +73,7 @@ const Navbar = () => {
         <Link href="/" className="flex items-center gap-2 group">
           
           <div>
-            <span className="text-sm sm:text-base md:text-lg lg:text-2xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+            <span className="text-sm sm:text-base md:text-lg lg:text-2xl font-bold bg-linear-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
               DiscountMart
             </span>
             <p className="text-[10px] text-amber-500 hidden sm:block">Premium Leather & Fusion</p>
@@ -159,7 +160,7 @@ const Navbar = () => {
           </Link>
 
           {/* User Auth Desktop */}
-          {isAuthenticated ? (
+          {user ? (
             <div ref={userModelRef} className="relative hidden lg:block">
               <button
                 onClick={toggleUserModel}
@@ -182,10 +183,10 @@ const Navbar = () => {
                     />
                     <div className="truncate">
                       <h2 className="font-semibold text-white truncate">
-                        John Doe
+                        {user.name || "John Doe"}
                       </h2>
                       <p className="text-sm text-gray-400 truncate">
-                        john.doe@example.com
+                        {user.email || "john.doe@example.com"}
                       </p>
                     </div>
                   </div>
@@ -305,7 +306,7 @@ const Navbar = () => {
               <FcAbout className="w-4 h-4" /> About
             </Link>
 
-            {isAuthenticated ? (
+            {user ? (
               <div className="mt-2 border-t border-gray-700 pt-2 flex flex-col gap-2">
                 <div className="flex items-center gap-3 px-4 py-2 bg-gray-700/50 rounded-xl">
                   <img

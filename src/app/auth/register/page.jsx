@@ -18,34 +18,44 @@ export default function RegisterPage() {
   const { register } = useAuth();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  
  
-
+  if (!name || !email || !password) {
+    toast.error('Please fill in all fields');
+    return;
+  }
   
+  setIsLoading(true);
   
-
+  try {
+    const result = await register(name, email, password);
     
-    try {
-      const result = await register(name, email, password);
-      console.log("Registration result:", result);
-      
-     
-      
-    } catch (error) {
-      toast.dismiss(loadingToast);
-      toast.error('Something went wrong. Please try again.', {
-        duration: 4000,
-      });
-    } finally {
-      setIsLoading(false);
+   
+    if (result.status === 201) {
+      toast.success(result.message || 'Registration successful!');
+      router.push('/auth/login');
+      return; 
     }
-  };
+    
+  
+    if (result.success === false) {
+      toast.error(result.message || 'Registration failed');
+      return;
+    }
+    
+    
+  } catch (error) {
+
+    console.error('Registration error:', error);
+    toast.error(error.message || 'Registration failed. Please try again.');
+  } finally {
+    setIsLoading(false); 
+  }
+};
 
   return (
     <>
-     
-      
-      
       <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
           <div className="text-center mb-8">
@@ -91,7 +101,7 @@ export default function RegisterPage() {
             />
 
             <Button type="submit" loading={isLoading}>
-              Sign Up
+            {isLoading ? 'Registering...' : 'Create Account'}
             </Button>
           </form>
 

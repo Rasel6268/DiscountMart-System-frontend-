@@ -29,7 +29,7 @@ const AuthProvider = ({ children }) => {
       const res = await api.get("/auth/me");
 
       if (res.status === 200) {
-        const data = await res.json();
+        const data = await res.data.user;
         setUser(data);
       }
     } catch (error) {
@@ -59,7 +59,7 @@ const AuthProvider = ({ children }) => {
       setUser(res.data.user);
       console.log(res);
     //   if (res.data.user.role === "admin") {
-    //     router.push("/admin/dashboard");
+    //     router.push("/dashboard");
     //   } else {
     //     router.push("/dashboard");
     //   }

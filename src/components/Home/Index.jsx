@@ -17,9 +17,12 @@ import { FaBangladeshiTakaSign } from "react-icons/fa6";
 
 import Image from "next/image";
 import BannerSlider from "../BannerSwiper";
+import { useAuth } from "@/AuthProvider/AuthProvider";
 
 const Home = () => {
-  return (
+  const {user} = useAuth()
+  console.log(user);
+   return (
     <section>
       {/* Premium Hero Section */}
       <div className="relative overflow-hidden">

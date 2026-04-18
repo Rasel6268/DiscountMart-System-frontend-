@@ -26,13 +26,12 @@ const navigation = [
   },
   {
     name: "Categories",
-    href: "/categories",
+    href: "/category",
     icon: <MdCategory className="text-lg" />,
     color: "text-emerald-400",
     subItems: [
-      { name: "All Categories", href: "/categories", color: "text-emerald-300" },
-      { name: "Add Category", href: "/categories/add", color: "text-emerald-300" },
-      { name: "Manage Categories", href: "/categories/manage", color: "text-emerald-300" },
+      { name: "All Categories", href: "/category/all", color: "text-emerald-300" },
+      { name: "Add Category", href: "/category/add", color: "text-emerald-300" },
     ],
   },
   {
