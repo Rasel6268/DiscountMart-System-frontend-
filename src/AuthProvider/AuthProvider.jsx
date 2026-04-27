@@ -33,7 +33,7 @@ const AuthProvider = ({ children }) => {
         setUser(data);
       }
     } catch (error) {
-      console.error("Auth check failed:", error);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,17 @@ const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
-  const logout = async () => {};
+  const logout = async () => {
+    try {
+      setLoading(true);
+    const result = await api.post("/auth/logout");
+    return result.data;
+    } catch (error) {
+      toast.error("Failed to log out");
+    } finally {
+      setLoading(false);
+    }
+  };
   const forgotPassword = async (email) => {};
   const resetPassword = async (token, password) => {};
   const authData = {

@@ -2,56 +2,49 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/Hooks/useAuth';
+import { useAuth } from '@/AuthProvider/AuthProvider';
 
-const ProtectedRoute = ({ children, fallbackPath = '/user/login' }) => {
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        // Not logged in → go login
-        const redirectPath =
-          pathname !== '/auth/login' ? pathname : '/dashboard';
+    if (loading) return;
 
-        sessionStorage.setItem('redirectPath', redirectPath);
+    // ❌ Not logged in → login page
+    if (!user) {
+      router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
+      return;
+    }
 
-        router.push(
-          `${fallbackPath}?redirect=${encodeURIComponent(redirectPath)}`
-        );
+    // 🛡️ Role check
+    if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+      // redirect based on role
+      if (user.role === 'admin') {
+        router.push('/admin');
       } else {
-        // ✅ If logged in → check role
-        if (user.role === 'admin' && !pathname.startsWith('/admin')) {
-          router.push('/dashboard');
-        }
-
-        if (user.role === 'user' && pathname.startsWith('/admin')) {
-          router.push('/dashboard');
-        }
+        router.push('/user');
       }
     }
-  }, [user, loading, router, pathname, fallbackPath]);
+  }, [user, loading, router, pathname, allowedRoles]);
 
-  // 🔄 Loading spinner
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-linear-to-br from-blue-50 to-indigo-100">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin h-12 w-12 border-b-2 border-blue-600 rounded-full"></div>
       </div>
     );
   }
 
-  // ✅ Allow rendering if authorized
-  if (user) {
-    // prevent wrong role access
-    if (user.role === 'admin' || user.role === 'user') {
-      return children;
-    }
+
+  if (!user) return null;
+
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    return null;
   }
 
-  return null;
+  return children;
 };
 
 export default ProtectedRoute;

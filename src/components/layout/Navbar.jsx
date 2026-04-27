@@ -21,14 +21,18 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/AuthProvider/AuthProvider";
 import Marquee from "react-fast-marquee";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openUserModel, setOpenUserModel] = useState(false);
   const [openCategoriesDropdown, setOpenCategoriesDropdown] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const userModelRef = useRef(null);
   const categoriesDropdownRef = useRef(null);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -51,6 +55,34 @@ const Navbar = () => {
 
   const toggleUserModel = () => setOpenUserModel(!openUserModel);
   const toggleMobileMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  // Logout handler
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+     const result = await logout(); 
+     if(result.status === 200){
+      setIsLoggingOut(false);
+      toast.success("Logged out successfully");
+      router.push("/auth/login");
+      router.refresh();
+     }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  // Categories data (you should define this or import it)
+  const categories = [
+    { name: "Men's Shoes", href: "/category/men-shoes", count: 45 },
+    { name: "Women's Shoes", href: "/category/women-shoes", count: 52 },
+    { name: "Men's Bags", href: "/category/men-bags", count: 28 },
+    { name: "Women's Bags", href: "/category/women-bags", count: 36 },
+    { name: "Accessories", href: "/category/accessories", count: 19 },
+    { name: "Sale", href: "/category/sale", count: 12 },
+  ];
 
   return (
     <header className="sticky top-0 z-50 bg-linear-to-r from-gray-900 to-gray-800 shadow-2xl">
@@ -226,23 +258,23 @@ const Navbar = () => {
                 className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500 hover:border-amber-400 transition-all duration-300 hover:scale-105"
               >
                 <img
-                  src="/user-avatar.jpg"
+                  src={user.avatar || "/user-avatar.jpg"}
                   alt="User Avatar"
                   className="w-full h-full object-cover"
                 />
               </button>
 
               {openUserModel && (
-                <div className="absolute right-0 mt-2 w-72 bg-gray-800 shadow-2xl rounded-xl border border-gray-700 overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-72 bg-gray-800 shadow-2xl rounded-xl border border-gray-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="bg-linear-to-r from-amber-900/50 to-gray-800 p-4 border-b border-gray-700 flex items-center gap-3">
                     <img
-                      src="/user-avatar.jpg"
+                      src={user.avatar || "/user-avatar.jpg"}
                       alt="User Avatar"
                       className="w-12 h-12 rounded-full object-cover border-2 border-amber-500 shadow-sm"
                     />
                     <div className="truncate">
                       <h2 className="font-semibold text-white truncate">
-                        {user.name || "John Doe"}
+                        {user.name || user.fullName || "John Doe"}
                       </h2>
                       <p className="text-sm text-gray-400 truncate">
                         {user.email || "john.doe@example.com"}
@@ -266,13 +298,29 @@ const Navbar = () => {
                       <ShoppingBag className="w-5 h-5" />
                       My Orders
                     </Link>
-                    <button
-                      onClick={() => {
-                        setOpenUserModel(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/20 hover:text-red-300 w-full transition"
+                    <Link
+                      href="/wishlist"
+                      className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 transition"
+                      onClick={() => setOpenUserModel(false)}
                     >
-                      <LogOut className="w-5 h-5" /> Logout
+                      <FaRegHeart className="w-5 h-5" />
+                      Wishlist
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                      className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/20 hover:text-red-300 w-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoggingOut ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                          Logging out...
+                        </>
+                      ) : (
+                        <>
+                          <LogOut className="w-5 h-5" /> Logout
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -311,7 +359,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-gray-800 shadow-2xl border-t border-gray-700 absolute w-full z-40 left-0 top-full">
+        <div className="lg:hidden bg-gray-800 shadow-2xl border-t border-gray-700 absolute w-full z-40 left-0 top-full animate-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-2 p-4 max-h-[80vh] overflow-y-auto">
             {/* Search Bar */}
             <div className="relative mb-2">
@@ -373,14 +421,16 @@ const Navbar = () => {
               <div className="mt-2 border-t border-gray-700 pt-2 flex flex-col gap-2">
                 <div className="flex items-center gap-3 px-4 py-2 bg-gray-700/50 rounded-xl">
                   <img
-                    src="/user-avatar.jpg"
+                    src={user.avatar || "/user-avatar.jpg"}
                     alt="User Avatar"
                     className="w-10 h-10 rounded-full object-cover border-2 border-amber-500"
                   />
                   <div>
-                    <h3 className="font-semibold text-white">John Doe</h3>
+                    <h3 className="font-semibold text-white">
+                      {user.name || user.fullName || "John Doe"}
+                    </h3>
                     <p className="text-sm text-gray-400">
-                      john.doe@example.com
+                      {user.email || "john.doe@example.com"}
                     </p>
                   </div>
                 </div>
@@ -398,11 +448,28 @@ const Navbar = () => {
                 >
                   <ShoppingBag className="w-4 h-4" /> My Orders
                 </Link>
-                <button
+                <Link
+                  href="/wishlist"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
                   onClick={toggleMobileMenu}
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-red-500/20 text-red-400 transition"
                 >
-                  <LogOut className="w-4 h-4" /> Logout
+                  <FaRegHeart className="w-4 h-4" /> Wishlist
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-red-500/20 text-red-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                      Logging out...
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="w-4 h-4" /> Logout
+                    </>
+                  )}
                 </button>
               </div>
             ) : (
