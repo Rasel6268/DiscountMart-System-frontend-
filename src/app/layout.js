@@ -10,7 +10,7 @@ const dmSans = DM_Sans({
 
 
 export const metadata = {
-  title: 'Auth App',
+  title: 'Discount',
   description: 'Authentication with Express and Next.js',
 };
 
