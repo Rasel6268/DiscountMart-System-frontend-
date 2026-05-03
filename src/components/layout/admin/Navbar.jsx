@@ -3,12 +3,17 @@ import React, { useState, useRef, useEffect } from "react";
 import { IoIosMenu } from "react-icons/io";
 import { FaSearch, FaBell, FaEnvelope, FaBars } from "react-icons/fa";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // ✅ Add this import
 import { User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { useAuth } from "@/AuthProvider/AuthProvider";
+import toast from "react-hot-toast";
 
 const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
   const [openUserModel, setOpenUserModel] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const userModelRef = useRef(null);
+  const { logout } = useAuth();
+  const router = useRouter(); // ✅ Add this line
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -29,6 +34,19 @@ const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  const logoutHandler = async() => {
+    try {
+      const result = await logout();
+      if(result.status === 200){
+        toast.success("Logged out successfully");
+        router.push("/auth/login");
+        router.refresh();
+      }
+    } catch (error) {
+      toast.error(error.message || "Logout failed");
+    }
+  }
 
   return (
     <header 
@@ -61,9 +79,8 @@ const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
           </button>
           
           <Link href="/dashboard" className="flex items-center gap-2 group">
-        
             <div className="hidden sm:block">
-              <span className="text-sm font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+              <span className="text-sm font-bold bg-linear-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
                 DiscountMart
               </span>
               <p className="text-[10px] text-amber-500">Admin Panel</p>
@@ -119,7 +136,7 @@ const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
 
             {openUserModel && (
               <div className="absolute right-0 mt-2 w-64 bg-gray-800 shadow-2xl rounded-xl border border-gray-700 overflow-hidden z-50 animate-fadeIn">
-                <div className="bg-gradient-to-r from-amber-900/50 to-gray-800 p-4 border-b border-gray-700 flex items-center gap-3">
+                <div className="bg-linear-to-r from-amber-900/50 to-gray-800 p-4 border-b border-gray-700 flex items-center gap-3">
                   <img 
                     src="/admin-avatar.jpg" 
                     alt="Admin" 
@@ -151,7 +168,7 @@ const AdminNavbar = ({ onMenuClick, onCollapseClick, isSidebarCollapsed }) => {
                   </Link>
                   <button 
                     className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/20 w-full transition"
-                    onClick={() => setOpenUserModel(false)}
+                    onClick={logoutHandler}
                   >
                     <LogOut className="w-5 h-5" /> Logout
                   </button>

@@ -42,6 +42,7 @@ import {
 import Link from "next/link";
 import DashboardSkeleton from "@/components/layout/admin/DashboardSkeleton";
 import AdminRoute from "@/components/ProtectedRoute/AdminRoute";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 // Sample data
 const revenueData = [
@@ -225,7 +226,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
+   <ProtectedRoute>
+      <div className="space-y-6">
       {/* Page Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -288,7 +290,7 @@ const Dashboard = () => {
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 text-white">
+        <div className="bg-linear-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 text-white">
           <div className="flex justify-between items-center">
             <div>
               <p className="text-amber-100 text-sm">Total Sales</p>
@@ -654,7 +656,7 @@ const Dashboard = () => {
         </Link>
         <Link
           href="/orders"
-          className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group"
+          className="bg-linear-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all duration-300 group"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -666,6 +668,7 @@ const Dashboard = () => {
         </Link>
       </div>
     </div>
+   </ProtectedRoute>
   );
 };
 

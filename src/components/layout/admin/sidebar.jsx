@@ -40,9 +40,8 @@ const navigation = [
     icon: <MdBrandingWatermark className="text-lg" />,
     color: "text-blue-400",
     subItems: [
-      { name: "All Brands", href: "/brands", color: "text-blue-300" },
-      { name: "Add Brand", href: "/brands/add", color: "text-blue-300" },
-      { name: "Manage Brands", href: "/brands/manage", color: "text-blue-300" },
+      { name: "All Brands", href: "/brands/all", color: "text-blue-300" },
+      { name: "Add Brand", href: "/brands/add", color: "text-blue-300" }
     ],
   },
   {
