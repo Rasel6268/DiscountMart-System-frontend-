@@ -1,5 +1,4 @@
 'use client'
-
 import CategoryForm from '@/components/category/CategoryForm';
 import CategoryList from '@/components/category/CategoryList';
 import SubCategoryForm from '@/components/category/SubCategoryForm';
