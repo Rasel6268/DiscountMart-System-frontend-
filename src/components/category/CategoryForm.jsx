@@ -107,7 +107,7 @@ const CategoryForm = ({
       className="bg-white rounded-2xl shadow-xl overflow-hidden"
     >
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4">
+      <div className="bg-linear-to-r from-purple-600 to-indigo-600 px-6 py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2 text-white">
             <FolderPlus className="w-5 h-5" />

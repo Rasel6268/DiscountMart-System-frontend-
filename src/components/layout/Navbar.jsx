@@ -7,6 +7,7 @@ import {
   FaRegHeart,
   FaSearch,
   FaShoppingCart,
+  FaHeart,
 } from "react-icons/fa";
 import { FcAbout } from "react-icons/fc";
 import Link from "next/link";
@@ -20,6 +21,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/AuthProvider/AuthProvider";
+import { useCart } from "@/hooks/useCart";
+import { useWishlist } from "@/hooks/useWishlist";
 import Marquee from "react-fast-marquee";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -29,10 +32,18 @@ const Navbar = () => {
   const [openUserModel, setOpenUserModel] = useState(false);
   const [openCategoriesDropdown, setOpenCategoriesDropdown] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const userModelRef = useRef(null);
   const categoriesDropdownRef = useRef(null);
   const { user, logout } = useAuth();
+  const { getTotalItems, items: cartItems } = useCart();
+  const { getWishlistCount, wishlistItems } = useWishlist();
   const router = useRouter();
+
+  // Handle mounting to avoid hydration mismatches
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -56,25 +67,32 @@ const Navbar = () => {
   const toggleUserModel = () => setOpenUserModel(!openUserModel);
   const toggleMobileMenu = () => setIsMenuOpen(!isMenuOpen);
 
+  // Get cart count (total items including quantities)
+  const cartCount = mounted ? getTotalItems() : 0;
+  
+  // Get wishlist count
+  const wishlistCount = mounted ? getWishlistCount() : 0;
+
   // Logout handler
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-     const result = await logout(); 
-     if(result.status === 200){
-      setIsLoggingOut(false);
-      toast.success("Logged out successfully");
-      router.push("/auth/login");
-      router.refresh();
-     }
+      const result = await logout();
+      if (result.status === 200) {
+        setIsLoggingOut(false);
+        toast.success("Logged out successfully");
+        router.push("/auth/login");
+        router.refresh();
+      }
     } catch (error) {
       console.error("Logout failed:", error);
+      toast.error("Logout failed. Please try again.");
     } finally {
       setIsLoggingOut(false);
     }
   };
 
-  // Categories data (you should define this or import it)
+  // Categories data
   const categories = [
     { name: "Men's Shoes", href: "/category/men-shoes", count: 45 },
     { name: "Women's Shoes", href: "/category/women-shoes", count: 52 },
@@ -149,7 +167,6 @@ const Navbar = () => {
             <circle cx="12" cy="12" r="10" />
             <polygon points="12 6 14 10 18 10 15 13 16 17 12 15 8 17 9 13 6 10 10 10 12 6" />
           </svg>
-
           <span className="flex items-center gap-1 font-bold text-[16px]">
             Instant discount code 50% off M06LY6
           </span>
@@ -169,7 +186,7 @@ const Navbar = () => {
             <polygon points="12 6 14 10 18 10 15 13 16 17 12 15 8 17 9 13 6 10 10 10 12 6" />
           </svg>
           <span className="flex items-center gap-1 font-bold text-[16px]">
-           Free shipping for all orders from $60.00
+            Free shipping for all orders from $60.00
           </span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -211,7 +228,6 @@ const Navbar = () => {
             <House className="w-4 h-4" /> Home
           </Link>
 
-          {/* Categories Dropdown */}
           <Link
             href="/shop"
             className="flex items-center gap-1 text-gray-300 hover:text-amber-400 transition-colors duration-300"
@@ -236,18 +252,31 @@ const Navbar = () => {
 
           {/* Wishlist */}
           <Link href="/wishlist" className="relative group">
-            <FaRegHeart className="text-xl text-gray-300 group-hover:text-red-500 transition-colors duration-300" />
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg">
-              3
-            </span>
+            {mounted && wishlistCount > 0 ? (
+              <FaHeart className="text-xl text-red-500 group-hover:text-red-600 transition-colors duration-300" />
+            ) : (
+              <FaRegHeart className="text-xl text-gray-300 group-hover:text-red-500 transition-colors duration-300" />
+            )}
+            {mounted && wishlistCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse">
+                {wishlistCount > 9 ? "9+" : wishlistCount}
+              </span>
+            )}
           </Link>
 
           {/* Cart */}
           <Link href="/cart" className="relative group">
             <AiOutlineShoppingCart className="text-xl text-gray-300 group-hover:text-amber-400 transition-colors duration-300" />
-            <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg">
-              0
-            </span>
+            {mounted && cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg animate-bounce">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+            {mounted && cartCount === 0 && (
+              <span className="absolute -top-2 -right-2 bg-gray-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg">
+                0
+              </span>
+            )}
           </Link>
 
           {/* User Auth Desktop */}
@@ -305,6 +334,11 @@ const Navbar = () => {
                     >
                       <FaRegHeart className="w-5 h-5" />
                       Wishlist
+                      {wishlistCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                          {wishlistCount}
+                        </span>
+                      )}
                     </Link>
                     <button
                       onClick={handleLogout}
@@ -417,6 +451,44 @@ const Navbar = () => {
               <FcAbout className="w-4 h-4" /> About
             </Link>
 
+            {/* Cart in Mobile Menu */}
+            <Link
+              href="/cart"
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+              onClick={toggleMobileMenu}
+            >
+              <div className="flex items-center gap-3">
+                <AiOutlineShoppingCart className="w-4 h-4" />
+                Cart
+              </div>
+              {mounted && cartCount > 0 && (
+                <span className="bg-amber-500 text-white text-xs px-2 py-1 rounded-full">
+                  {cartCount} {cartCount === 1 ? "item" : "items"}
+                </span>
+              )}
+            </Link>
+
+            {/* Wishlist in Mobile Menu */}
+            <Link
+              href="/wishlist"
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+              onClick={toggleMobileMenu}
+            >
+              <div className="flex items-center gap-3">
+                {mounted && wishlistCount > 0 ? (
+                  <FaHeart className="w-4 h-4 text-red-500" />
+                ) : (
+                  <FaRegHeart className="w-4 h-4" />
+                )}
+                Wishlist
+              </div>
+              {mounted && wishlistCount > 0 && (
+                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
             {user ? (
               <div className="mt-2 border-t border-gray-700 pt-2 flex flex-col gap-2">
                 <div className="flex items-center gap-3 px-4 py-2 bg-gray-700/50 rounded-xl">
@@ -447,13 +519,6 @@ const Navbar = () => {
                   onClick={toggleMobileMenu}
                 >
                   <ShoppingBag className="w-4 h-4" /> My Orders
-                </Link>
-                <Link
-                  href="/wishlist"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
-                  onClick={toggleMobileMenu}
-                >
-                  <FaRegHeart className="w-4 h-4" /> Wishlist
                 </Link>
                 <button
                   onClick={handleLogout}

@@ -2,7 +2,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { IoIosClose, IoIosArrowBack, IoIosArrowForward, IoIosArrowDown } from "react-icons/io";
+import {
+  IoIosClose,
+  IoIosArrowBack,
+  IoIosArrowForward,
+  IoIosArrowDown,
+} from "react-icons/io";
 import { FaProductHunt, FaUser, FaCog } from "react-icons/fa";
 import {
   MdBorderAll,
@@ -13,6 +18,7 @@ import {
   MdDashboard,
   MdDiscount,
   MdChevronRight,
+  MdLocalOffer,
 } from "react-icons/md";
 import { HiOutlineLogout } from "react-icons/hi";
 import { GiLeatherBoot, GiHandbag } from "react-icons/gi";
@@ -30,8 +36,16 @@ const navigation = [
     icon: <MdCategory className="text-lg" />,
     color: "text-emerald-400",
     subItems: [
-      { name: "All Categories", href: "/category/all", color: "text-emerald-300" },
-      { name: "Add Category", href: "/category/add", color: "text-emerald-300" },
+      {
+        name: "All Categories",
+        href: "/category/all",
+        color: "text-emerald-300",
+      },
+      {
+        name: "Add Category",
+        href: "/category/add",
+        color: "text-emerald-300",
+      },
     ],
   },
   {
@@ -41,7 +55,7 @@ const navigation = [
     color: "text-blue-400",
     subItems: [
       { name: "All Brands", href: "/brands/all", color: "text-blue-300" },
-      { name: "Add Brand", href: "/brands/add", color: "text-blue-300" }
+      { name: "Add Brand", href: "/brands/add", color: "text-blue-300" },
     ],
   },
   {
@@ -52,9 +66,21 @@ const navigation = [
     subItems: [
       { name: "All Products", href: "/products", color: "text-purple-300" },
       { name: "Add Product", href: "/products/add", color: "text-purple-300" },
-      { name: "Manage Products", href: "/products/manage", color: "text-purple-300" },
-      { name: "Product Reviews", href: "/products/reviews", color: "text-purple-300" },
-      { name: "Product Stock", href: "/products/stock", color: "text-purple-300" },
+      {
+        name: "Manage Products",
+        href: "/products/manage",
+        color: "text-purple-300",
+      },
+      {
+        name: "Product Reviews",
+        href: "/products/reviews",
+        color: "text-purple-300",
+      },
+      {
+        name: "Product Stock",
+        href: "/products/stock",
+        color: "text-purple-300",
+      },
     ],
   },
   {
@@ -63,8 +89,22 @@ const navigation = [
     icon: <MdDiscount className="text-lg" />,
     color: "text-red-400",
     subItems: [
-      { name: "Active Discounts", href: "/discounts/active", color: "text-red-300" },
+      {
+        name: "Active Discounts",
+        href: "/discounts/active",
+        color: "text-red-300",
+      },
       { name: "Add Discount", href: "/discounts/add", color: "text-red-300" },
+    ],
+  },
+  {
+    name: "Coupons Offers",
+    href: "/coupons",
+    icon: <MdLocalOffer className="text-lg" />,
+    color: "text-green-400",
+    subItems: [
+      { name: "All Coupons", href: "/coupons", color: "text-green-300" },
+      { name: "Add Coupon", href: "/coupons/add", color: "text-green-300" },
     ],
   },
   {
@@ -83,8 +123,16 @@ const navigation = [
     icon: <MdDeliveryDining className="text-lg" />,
     color: "text-orange-400",
     subItems: [
-      { name: "Delivery Settings", href: "/delivery_cost/settings", color: "text-orange-300" },
-      { name: "Delivery Zones", href: "/delivery_cost/zones", color: "text-orange-300" },
+      {
+        name: "Delivery Settings",
+        href: "/delivery_cost/settings",
+        color: "text-orange-300",
+      },
+      {
+        name: "Delivery Zones",
+        href: "/delivery_cost/zones",
+        color: "text-orange-300",
+      },
     ],
   },
   {
@@ -94,8 +142,16 @@ const navigation = [
     color: "text-indigo-400",
     subItems: [
       { name: "All Orders", href: "/orders", color: "text-indigo-300" },
-      { name: "Pending Orders", href: "/orders/pending", color: "text-indigo-300" },
-      { name: "Completed Orders", href: "/orders/completed", color: "text-indigo-300" },
+      {
+        name: "Pending Orders",
+        href: "/orders/pending",
+        color: "text-indigo-300",
+      },
+      {
+        name: "Completed Orders",
+        href: "/orders/completed",
+        color: "text-indigo-300",
+      },
     ],
   },
   {
@@ -104,8 +160,16 @@ const navigation = [
     icon: <MdPayment className="text-lg" />,
     color: "text-green-400",
     subItems: [
-      { name: "All Transactions", href: "/transaction", color: "text-green-300" },
-      { name: "Completed Payments", href: "/transaction/completed", color: "text-green-300" },
+      {
+        name: "All Transactions",
+        href: "/transaction",
+        color: "text-green-300",
+      },
+      {
+        name: "Completed Payments",
+        href: "/transaction/completed",
+        color: "text-green-300",
+      },
     ],
   },
   {
@@ -114,8 +178,16 @@ const navigation = [
     icon: <FaCog className="text-lg" />,
     color: "text-gray-400",
     subItems: [
-      { name: "General Settings", href: "/settings/general", color: "text-gray-300" },
-      { name: "Payment Settings", href: "/settings/payment", color: "text-gray-300" },
+      {
+        name: "General Settings",
+        href: "/settings/general",
+        color: "text-gray-300",
+      },
+      {
+        name: "Payment Settings",
+        href: "/settings/payment",
+        color: "text-gray-300",
+      },
     ],
   },
 ];
@@ -218,8 +290,12 @@ export default function Sidebar({
                 <span className="text-white font-bold text-lg">AD</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">Admin User</p>
-                <p className="text-xs text-gray-400 truncate">admin@aisdiscountmart.com</p>
+                <p className="text-sm font-semibold text-white truncate">
+                  Admin User
+                </p>
+                <p className="text-xs text-gray-400 truncate">
+                  admin@aisdiscountmart.com
+                </p>
                 <div className="flex items-center gap-1 mt-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                   <span className="text-xs text-green-400">Online</span>
@@ -316,9 +392,10 @@ export default function Sidebar({
                             href={subItem.href}
                             className={`
                               flex items-center px-3 py-2 rounded-lg transition-all duration-300 text-sm
-                              ${isSubActive
-                                ? "bg-amber-500/10 text-amber-400"
-                                : "text-gray-500 hover:bg-gray-800 hover:text-amber-400"
+                              ${
+                                isSubActive
+                                  ? "bg-amber-500/10 text-amber-400"
+                                  : "text-gray-500 hover:bg-gray-800 hover:text-amber-400"
                               }
                             `}
                             onClick={() => onMobileClose?.()}
