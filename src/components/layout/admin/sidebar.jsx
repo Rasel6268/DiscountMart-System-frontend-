@@ -40,12 +40,7 @@ const navigation = [
         name: "All Categories",
         href: "/category/all",
         color: "text-emerald-300",
-      },
-      {
-        name: "Add Category",
-        href: "/category/add",
-        color: "text-emerald-300",
-      },
+      }
     ],
   },
   {
@@ -55,7 +50,7 @@ const navigation = [
     color: "text-blue-400",
     subItems: [
       { name: "All Brands", href: "/brands/all", color: "text-blue-300" },
-      { name: "Add Brand", href: "/brands/add", color: "text-blue-300" },
+
     ],
   },
   {
@@ -65,22 +60,6 @@ const navigation = [
     color: "text-purple-400",
     subItems: [
       { name: "All Products", href: "/products", color: "text-purple-300" },
-      { name: "Add Product", href: "/products/add", color: "text-purple-300" },
-      {
-        name: "Manage Products",
-        href: "/products/manage",
-        color: "text-purple-300",
-      },
-      {
-        name: "Product Reviews",
-        href: "/products/reviews",
-        color: "text-purple-300",
-      },
-      {
-        name: "Product Stock",
-        href: "/products/stock",
-        color: "text-purple-300",
-      },
     ],
   },
   {
@@ -104,7 +83,6 @@ const navigation = [
     color: "text-green-400",
     subItems: [
       { name: "All Coupons", href: "/coupons", color: "text-green-300" },
-      { name: "Add Coupon", href: "/coupons/add", color: "text-green-300" },
     ],
   },
   {
@@ -114,7 +92,7 @@ const navigation = [
     color: "text-cyan-400",
     subItems: [
       { name: "All Users", href: "/users", color: "text-cyan-300" },
-      { name: "Add User", href: "/users/add", color: "text-cyan-300" },
+
     ],
   },
   {
@@ -142,16 +120,6 @@ const navigation = [
     color: "text-indigo-400",
     subItems: [
       { name: "All Orders", href: "/orders", color: "text-indigo-300" },
-      {
-        name: "Pending Orders",
-        href: "/orders/pending",
-        color: "text-indigo-300",
-      },
-      {
-        name: "Completed Orders",
-        href: "/orders/completed",
-        color: "text-indigo-300",
-      },
     ],
   },
   {
@@ -165,31 +133,9 @@ const navigation = [
         href: "/transaction",
         color: "text-green-300",
       },
-      {
-        name: "Completed Payments",
-        href: "/transaction/completed",
-        color: "text-green-300",
-      },
     ],
-  },
-  {
-    name: "Settings",
-    href: "/settings",
-    icon: <FaCog className="text-lg" />,
-    color: "text-gray-400",
-    subItems: [
-      {
-        name: "General Settings",
-        href: "/settings/general",
-        color: "text-gray-300",
-      },
-      {
-        name: "Payment Settings",
-        href: "/settings/payment",
-        color: "text-gray-300",
-      },
-    ],
-  },
+  }
+ 
 ];
 
 export default function Sidebar({
@@ -221,8 +167,6 @@ export default function Sidebar({
           onClick={onMobileClose}
         />
       )}
-
-      {/* Sidebar */}
       <div
         className={`
           fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transition-all duration-300 ease-in-out h-screen overflow-y-auto
