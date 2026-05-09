@@ -135,10 +135,8 @@ const CartPage = () => {
       // Replace with actual checkout API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Clear cart and redirect to payment/success page
-      clearCart();
-      toast.success("Order placed successfully!");
-      router.push("/checkout/success");
+     
+      router.push("/checkout");
     } catch (error) {
       toast.error("Failed to process checkout");
     } finally {

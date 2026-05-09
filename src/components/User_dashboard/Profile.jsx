@@ -1,7 +1,9 @@
 "use client";
 
 import { useAuth } from "@/AuthProvider/AuthProvider";
+import api from "@/config/api";
 import React, { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import {
   FaEdit,
   FaSave,
@@ -21,15 +23,12 @@ const Profile = () => {
     address: {
       street: "",
       city: "",
-      state: "",
-      zipCode: "",
-      country: "",
+      postalCode: "",
     },
   });
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-
 
   // Load user data when available
   useEffect(() => {
@@ -41,9 +40,8 @@ const Profile = () => {
         address: {
           street: user.address?.street || "",
           city: user.address?.city || "",
-          state: user.address?.state || "",
-          zipCode: user.address?.zipCode || "",
-          country: user.address?.country || "",
+          postalCode: user.address?.postalCode || "",
+      
         }
       });
     }
@@ -52,14 +50,9 @@ const Profile = () => {
   // Validation rules
   const validateField = (name, value) => {
     switch (name) {
-      case "firstName":
-        if (!value.trim()) return "First name is required";
-        if (value.length < 2) return "First name must be at least 2 characters";
-        return "";
-
-      case "lastName":
-        if (!value.trim()) return "Last name is required";
-        if (value.length < 2) return "Last name must be at least 2 characters";
+      case "name":
+        if (!value.trim()) return "Name is required";
+        if (value.length < 2) return "Name must be at least 2 characters";
         return "";
 
       case "email":
@@ -70,20 +63,8 @@ const Profile = () => {
 
       case "phone":
         if (!value.trim()) return "Phone number is required";
-        const phoneRegex =
-          /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,5}[-\s\.]?[0-9]{1,5}$/;
+        const phoneRegex = /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,5}[-\s\.]?[0-9]{1,5}$/;
         if (!phoneRegex.test(value)) return "Invalid phone number format";
-        return "";
-
-      case "dateOfBirth":
-        if (!value) return "Date of birth is required";
-        const age = new Date().getFullYear() - new Date(value).getFullYear();
-        if (age < 18) return "You must be at least 18 years old";
-        if (age > 100) return "Invalid age";
-        return "";
-
-      case "bio":
-        if (value.length > 500) return "Bio cannot exceed 500 characters";
         return "";
 
       case "address.street":
@@ -94,18 +75,10 @@ const Profile = () => {
         if (!value.trim()) return "City is required";
         return "";
 
-      case "address.state":
-        if (!value.trim()) return "State is required";
-        return "";
-
-      case "address.zipCode":
-        if (!value.trim()) return "ZIP code is required";
+      case "address.postalCode":
+        if (!value.trim()) return "Postal code is required";
         const zipRegex = /^\d{5}(-\d{4})?$/;
         if (!zipRegex.test(value)) return "Invalid ZIP code format";
-        return "";
-
-      case "address.country":
-        if (!value.trim()) return "Country is required";
         return "";
 
       default:
@@ -117,19 +90,25 @@ const Profile = () => {
   const validateAll = () => {
     const newErrors = {};
 
-    Object.keys(formData).forEach((key) => {
-      if (key === "address") {
-        Object.keys(formData.address).forEach((addrKey) => {
-          const error = validateField(
-            `address.${addrKey}`,
-            formData.address[addrKey],
-          );
-          if (error) newErrors[`address.${addrKey}`] = error;
-        });
-      } else if (key !== "profilePicture" && key !== "newsletter") {
-        const error = validateField(key, formData[key]);
-        if (error) newErrors[key] = error;
-      }
+    // Validate name
+    const nameError = validateField("name", formData.name);
+    if (nameError) newErrors.name = nameError;
+
+    // Validate email
+    const emailError = validateField("email", formData.email);
+    if (emailError) newErrors.email = emailError;
+
+    // Validate phone
+    const phoneError = validateField("phone", formData.phone);
+    if (phoneError) newErrors.phone = phoneError;
+
+    // Validate address fields
+    Object.keys(formData.address).forEach((addrKey) => {
+      const error = validateField(
+        `address.${addrKey}`,
+        formData.address[addrKey],
+      );
+      if (error) newErrors[`address.${addrKey}`] = error;
     });
 
     setErrors(newErrors);
@@ -150,16 +129,22 @@ const Profile = () => {
         },
       }));
 
-      const error = validateField(name, value);
-      setErrors((prev) => ({ ...prev, [name]: error }));
+      // Only validate if touched
+      if (touched[name]) {
+        const error = validateField(name, value);
+        setErrors((prev) => ({ ...prev, [name]: error }));
+      }
     } else {
       setFormData((prev) => ({
         ...prev,
         [name]: type === "checkbox" ? e.target.checked : value,
       }));
 
-      const error = validateField(name, value);
-      setErrors((prev) => ({ ...prev, [name]: error }));
+      // Only validate if touched
+      if (touched[name]) {
+        const error = validateField(name, value);
+        setErrors((prev) => ({ ...prev, [name]: error }));
+      }
     }
   };
 
@@ -183,20 +168,30 @@ const Profile = () => {
   // Handle save
   const handleSave = async () => {
     if (validateAll()) {
-      console.log("Saving profile:", formData);
-      setIsEditing(false);
-      alert("Profile updated successfully!");
-    } else {
-      const allFields = {};
-      Object.keys(formData).forEach((key) => {
-        if (key === "address") {
-          Object.keys(formData.address).forEach((addrKey) => {
-            allFields[`address.${addrKey}`] = true;
-          });
-        } else if (key !== "profilePicture" && key !== "newsletter") {
-          allFields[key] = true;
+    
+      
+      try {
+        const res = await api.put('/auth/edit_profile', formData);
+         if (res.data.success) {
+          toast.success(res.data.message);
+        } else {
+          toast.error("Failed to update profile. Please try again.");
         }
-      });
+        setIsEditing(false);
+      } catch (error) {
+        console.error("Error saving profile:", error);
+        toast.error("Failed to update profile. Please try again.");
+      }
+    } else {
+      // Mark all fields as touched to show errors
+      const allFields = {
+        name: true,
+        email: true,
+        phone: true,
+        "address.street": true,
+        "address.city": true,
+        "address.postalCode": true,
+      };
       setTouched(allFields);
     }
   };
@@ -212,7 +207,7 @@ const Profile = () => {
       "w-full px-4 py-2 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2";
 
     if (!isEditing) {
-      return `${baseClasses} bg-gray-50 border-gray-200 text-gray-600`;
+      return `${baseClasses} bg-gray-50 border-gray-200 text-gray-600 cursor-not-allowed`;
     }
 
     if (isEmptyField && !touched[fieldName]) {
@@ -235,8 +230,16 @@ const Profile = () => {
     return !value || (typeof value === "string" && !value.trim());
   };
 
+  // Get initials from name
+  const getInitials = () => {
+    if (!formData.name) return "?";
+    const nameParts = formData.name.trim().split(" ");
+    if (nameParts.length === 1) return nameParts[0][0].toUpperCase();
+    return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+  };
+
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto p-4">
       {/* Profile Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
@@ -259,7 +262,24 @@ const Profile = () => {
           ) : (
             <>
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  // Reset form data to original user data when canceling
+                  if (user) {
+                    setFormData({
+                      name: user.name || "",
+                      email: user.email || "",
+                      phone: user.phone || "",
+                      address: {
+                        street: user.address?.street || "",
+                        city: user.address?.city || "",
+                        postalCode: user.address?.postalCode || "",
+                      }
+                    });
+                  }
+                  setErrors({});
+                  setTouched({});
+                }}
                 className="flex items-center gap-2 px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-all duration-300"
               >
                 <FaTimes className="text-sm" />
@@ -282,10 +302,9 @@ const Profile = () => {
         <div className="bg-white rounded-xl border border-amber-100 p-6">
           <div className="flex items-center gap-6">
             <div className="relative">
-              <div className="w-24 h-24 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-24 h-24 bg-linear-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-2xl">
-                  {formData.firstName?.[0]}
-                  {formData.lastName?.[0]}
+                  {getInitials()}
                 </span>
               </div>
               {isEditing && (
@@ -314,64 +333,31 @@ const Profile = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name <span className="text-red-500">*</span>
+                Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                name="firstName"
-                value={formData.firstName}
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 disabled={!isEditing}
                 placeholder={
-                  !isEditing && isEmpty(formData.firstName)
+                  !isEditing && isEmpty(formData.name)
                     ? "Please fill this field"
-                    : "Enter your first name"
+                    : "Enter your full name"
                 }
                 className={getInputClasses(
-                  "firstName",
-                  isEmpty(formData.firstName),
+                  "name",
+                  isEmpty(formData.name),
                 )}
               />
-              {hasError("firstName") && (
-                <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+              {hasError("name") && (
+                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
               )}
               {!isEditing &&
-                isEmpty(formData.firstName) &&
-                !hasError("firstName") && (
-                  <p className="text-amber-500 text-xs mt-1">
-                    ⚠️ This field is empty
-                  </p>
-                )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={!isEditing}
-                placeholder={
-                  !isEditing && isEmpty(formData.lastName)
-                    ? "Please fill this field"
-                    : "Enter your last name"
-                }
-                className={getInputClasses(
-                  "lastName",
-                  isEmpty(formData.lastName),
-                )}
-              />
-              {hasError("lastName") && (
-                <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
-              )}
-              {!isEditing &&
-                isEmpty(formData.lastName) &&
-                !hasError("lastName") && (
+                isEmpty(formData.name) &&
+                !hasError("name") && (
                   <p className="text-amber-500 text-xs mt-1">
                     ⚠️ This field is empty
                   </p>
@@ -388,12 +374,13 @@ const Profile = () => {
                 value={formData.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                disabled={!isEditing}
+                disabled={isEditing}
                 placeholder={
                   !isEditing && isEmpty(formData.email)
-                    ? "Please fill this field"
-                    : "Enter your email"
+                    ? ""
+                    : "Never Change Your Email"
                 }
+                readOnly={isEditing}
                 className={getInputClasses("email", isEmpty(formData.email))}
               />
               {hasError("email") && (
@@ -432,36 +419,6 @@ const Profile = () => {
                   ⚠️ This field is empty
                 </p>
               )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date of Birth <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={!isEditing}
-                className={getInputClasses(
-                  "dateOfBirth",
-                  isEmpty(formData.dateOfBirth),
-                )}
-              />
-              {hasError("dateOfBirth") && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.dateOfBirth}
-                </p>
-              )}
-              {!isEditing &&
-                isEmpty(formData.dateOfBirth) &&
-                !hasError("dateOfBirth") && (
-                  <p className="text-amber-500 text-xs mt-1">
-                    ⚠️ This field is empty
-                  </p>
-                )}
             </div>
           </div>
         </div>
@@ -545,103 +502,33 @@ const Profile = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                State <span className="text-red-500">*</span>
+                Postal Code <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                name="address.state"
-                value={formData.address.state}
+                name="address.postalCode"
+                value={formData.address.postalCode}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 disabled={!isEditing}
                 placeholder={
-                  !isEditing && isEmpty(formData.address.state)
+                  !isEditing && isEmpty(formData.address.postalCode)
                     ? "Please fill this field"
-                    : "Enter your state"
+                    : "Enter your postal code"
                 }
                 className={getInputClasses(
-                  "address.state",
-                  isEmpty(formData.address.state),
+                  "address.postalCode",
+                  isEmpty(formData.address.postalCode),
                 )}
               />
-              {hasError("address.state") && (
+              {hasError("address.postalCode") && (
                 <p className="text-red-500 text-xs mt-1">
-                  {errors["address.state"]}
+                  {errors["address.postalCode"]}
                 </p>
               )}
               {!isEditing &&
-                isEmpty(formData.address.state) &&
-                !hasError("address.state") && (
-                  <p className="text-amber-500 text-xs mt-1">
-                    ⚠️ This field is empty
-                  </p>
-                )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                ZIP Code <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="address.zipCode"
-                value={formData.address.zipCode}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={!isEditing}
-                placeholder={
-                  !isEditing && isEmpty(formData.address.zipCode)
-                    ? "Please fill this field"
-                    : "Enter your ZIP code"
-                }
-                className={getInputClasses(
-                  "address.zipCode",
-                  isEmpty(formData.address.zipCode),
-                )}
-              />
-              {hasError("address.zipCode") && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors["address.zipCode"]}
-                </p>
-              )}
-              {!isEditing &&
-                isEmpty(formData.address.zipCode) &&
-                !hasError("address.zipCode") && (
-                  <p className="text-amber-500 text-xs mt-1">
-                    ⚠️ This field is empty
-                  </p>
-                )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Country <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="address.country"
-                value={formData.address.country}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                disabled={!isEditing}
-                placeholder={
-                  !isEditing && isEmpty(formData.address.country)
-                    ? "Please fill this field"
-                    : "Enter your country"
-                }
-                className={getInputClasses(
-                  "address.country",
-                  isEmpty(formData.address.country),
-                )}
-              />
-              {hasError("address.country") && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors["address.country"]}
-                </p>
-              )}
-              {!isEditing &&
-                isEmpty(formData.address.country) &&
-                !hasError("address.country") && (
+                isEmpty(formData.address.postalCode) &&
+                !hasError("address.postalCode") && (
                   <p className="text-amber-500 text-xs mt-1">
                     ⚠️ This field is empty
                   </p>
@@ -649,8 +536,6 @@ const Profile = () => {
             </div>
           </div>
         </div>
-
-    
 
         {/* Validation Summary */}
         {isEditing && Object.keys(errors).length > 0 && (
