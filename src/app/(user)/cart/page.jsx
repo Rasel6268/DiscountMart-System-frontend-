@@ -175,7 +175,7 @@ const CartPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 py-8 md:py-12">
+    <div className="min-h-screen bg-linear-to-br from-amber-50 via-white to-amber-50 py-8 md:py-12">
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Page Header */}
         <div className="mb-8">
@@ -227,7 +227,7 @@ const CartPage = () => {
                           {/* Product Info */}
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-16 h-16 bg-amber-100 rounded-lg overflow-hidden flex-shrink-0">
+                              <div className="w-16 h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0">
                                 {item.image ? (
                                   <img
                                     src={item.image}

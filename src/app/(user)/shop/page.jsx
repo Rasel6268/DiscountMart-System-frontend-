@@ -143,7 +143,7 @@ const Shop = () => {
         quantity: 1,
         image: product.images?.[0]?.url,
       });
-      console.log("Add to cart result:", result); 
+    
       
       if (result.success) {
         toast.success(`${product.name} added to cart!`);
@@ -187,7 +187,7 @@ const Shop = () => {
   };
 
   const handleProductClick = (productId) => {
-    router.push(`/product/${productId}`);
+    router.push(`/shop/${productId}`);
   };
 
   return (
