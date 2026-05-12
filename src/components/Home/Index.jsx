@@ -18,9 +18,13 @@ import { FaBangladeshiTakaSign } from "react-icons/fa6";
 import Image from "next/image";
 import BannerSlider from "../BannerSwiper";
 import { useAuth } from "@/AuthProvider/AuthProvider";
+import { useCart } from "@/hooks/useCart";
 
 const Home = () => {
   const {user,loading} = useAuth()
+  const{items} = useCart()
+  console.log(items);
+  console.log(user);
    return (
     <section>
       {/* Premium Hero Section */}

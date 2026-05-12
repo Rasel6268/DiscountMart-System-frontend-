@@ -169,7 +169,7 @@ export default function Sidebar({
       )}
       <div
         className={`
-          fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl transition-all duration-300 ease-in-out h-screen overflow-y-auto
+          fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 bg-linear-to-b from-gray-900 to-gray-800 shadow-2xl transition-all duration-300 ease-in-out h-screen overflow-y-auto
           ${isOpen ? "w-72" : "lg:w-20"}
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0

@@ -11,17 +11,6 @@ const useCartStore = create(
       addToCart: async (product) => {
         const currentItems = get().items;
         const existingItem = currentItems.find(item => item.productId === product.productId);
-        
-        // if (existingItem) {
-        //   const updatedItems = currentItems.map(item =>
-        //     item.productId === product.productId
-        //       ? { ...item, quantity: item.quantity + 1 }
-        //       : item
-        //   );
-        //   set({ items: updatedItems });
-        // } else {
-        //   set({ items: [...currentItems, { ...product, quantity: 1 }] });
-        // }
 
         if (existingItem) {
          return { success: false, message: 'Product is already in the cart' };

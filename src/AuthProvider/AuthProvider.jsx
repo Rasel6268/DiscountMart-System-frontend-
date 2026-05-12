@@ -27,6 +27,7 @@ const AuthProvider = ({ children }) => {
   const checkUser = async () => {
     try {
       const res = await api.get("/auth/me");
+      console.log("User data:", res);
 
       if (res.status === 200) {
         const data = await res.data.user;

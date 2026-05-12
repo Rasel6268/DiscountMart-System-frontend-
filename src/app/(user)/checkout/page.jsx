@@ -4,84 +4,44 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   FaLock,
-  FaCcVisa,
-  FaCcMastercard,
-  FaCcPaypal,
-  FaCcAmex,
   FaTruck,
   FaMoneyBillWave,
   FaCreditCard,
-  FaUser,
   FaMapMarkerAlt,
-  FaPhone,
-  FaEnvelope,
-  FaEdit,
   FaTrash,
   FaPlus,
   FaCheckCircle,
   FaTimes,
+  FaShieldAlt,
 } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
 
 import { GiHandBag } from "react-icons/gi";
 import toast from "react-hot-toast";
+import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/AuthProvider/AuthProvider";
+import api from "@/config/api";
 
 const CheckoutPage = () => {
   const router = useRouter();
-  // Mock user data
-  const [user, setUser] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+880 1234567890",
-    avatar: "/user-avatar.jpg",
-    isLoggedIn: true,
-  });
-  
-  // Mock cart data
-  const [cartItems, setCartItems] = useState([
-    {
-      id: "1",
-      productId: "prod_001",
-      name: "Premium Leather Backpack",
-      price: 2899.99, // BDT
-      quantity: 1,
-      image: null,
-      brand: "UrbanLife",
-    },
-    {
-      id: "2",
-      productId: "prod_002",
-      name: "Designer Sunglasses",
-      price: 1299.99,
-      quantity: 2,
-      image: null,
-      brand: "LuxeEye",
-    },
-    {
-      id: "3",
-      productId: "prod_003",
-      name: "Minimalist Wrist Watch",
-      price: 3599.99,
-      quantity: 1,
-      image: null,
-      brand: "TimeCraft",
-    },
-  ]);
-  
+  const { items, getTotalItems, getTotalPrice, clearCart } = useCart();
+  const { user } = useAuth();
+
+  console.log("User data:", user);
+  console.log("Cart items:", items);
+
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
-  
+
   // Form data
   const [formData, setFormData] = useState({
     // Personal Info
-    firstName: "",
-    lastName: "",
+    name: "",
     email: "",
     phone: "",
-    
+
     // Address
     addressLine1: "",
     addressLine2: "",
@@ -89,59 +49,52 @@ const CheckoutPage = () => {
     area: "",
     postCode: "",
     country: "Bangladesh",
-    
+
     // Shipping Method
-    shippingArea: "dhaka", // 'dhaka' or 'outside_dhaka'
-    
+    shippingArea: "dhaka",
+
     // Payment Method
-    paymentMethod: "card",
-    
-    // Card Details (for card payment)
-    cardNumber: "",
-    cardName: "",
-    expiryDate: "",
-    cvv: "",
-    
-    // Billing Address
-    sameAsShipping: true,
-    billingAddress: {
-      addressLine1: "",
-      addressLine2: "",
-      city: "",
-      area: "",
-      postCode: "",
-      country: "Bangladesh",
-    },
-    
+    paymentMethod: "ssl", // 'ssl' or 'cod'
+
     // Additional Info
     notes: "",
     saveAddress: false,
     addressName: "",
   });
-  
+
   const [errors, setErrors] = useState({});
   const [selectedAddressId, setSelectedAddressId] = useState(null);
-  
+
   // Shipping methods for Bangladesh
   const shippingMethods = {
     dhaka: {
       id: "dhaka",
       name: "Inside Dhaka",
-      price: 60, // 60 TK
+      price: 60,
       days: "1-2 business days",
       description: "Delivery within Dhaka city",
-      icon: FaLocationDot ,
+      icon: FaLocationDot,
     },
     outside_dhaka: {
       id: "outside_dhaka",
       name: "Outside Dhaka",
-      price: 130, // 130 TK
+      price: 130,
       days: "3-5 business days",
       description: "Delivery anywhere outside Dhaka",
       icon: FaTruck,
     },
   };
-  
+
+  // Transform cart items from useCart to the format needed for display
+  const cartItems = items.map((item, index) => ({
+    id: item.productId || `item_${index}`,
+    productId: item.productId,
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+    image: item.image,
+  }));
+
   // Mock saved addresses
   useEffect(() => {
     const mockAddresses = [
@@ -169,59 +122,70 @@ const CheckoutPage = () => {
         shippingArea: "dhaka",
         isDefault: false,
       },
-      {
-        _id: "addr_003",
-        name: "Factory",
-        addressLine1: "Industrial Area",
-        addressLine2: "Gazipur",
-        city: "Gazipur",
-        area: "Tongi",
-        postCode: "1704",
-        country: "Bangladesh",
-        shippingArea: "outside_dhaka",
-        isDefault: false,
-      },
     ];
     setSavedAddresses(mockAddresses);
-    
-    // Pre-fill user data
-    setFormData(prev => ({
-      ...prev,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-    }));
-  }, []);
-  
-  // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shippingCost = formData.shippingArea === 'dhaka' ? 60 : 130;
-  const tax = subtotal * 0.05; // 5% VAT in Bangladesh
+
+    // Pre-fill user data from useAuth
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        addressLine1: user.address?.street || "",
+        city: user.address?.city || "",
+        postCode: user.address?.postalCode || "",
+      }));
+    }
+  }, [user]);
+
+  // Calculate totals using actual cart data
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
+  const shippingCost = formData.shippingArea === "dhaka" ? 60 : 130;
+  const tax = subtotal * 0.05; // 5% VAT
   const total = subtotal + shippingCost + tax;
-  
+
   // Determine shipping area based on city/area
   const determineShippingArea = (city, area) => {
     const dhakaAreas = [
-      'dhaka', 'dhanmondi', 'gulshan', 'banani', 'uttara', 'mirpur', 
-      'mohammadpur', 'motijheel', 'paltan', 'ramna', 'shahbag', 
-      'tejgaon', 'badda', 'khilgaon', 'shyamoli', 'farmgate'
+      "dhaka",
+      "dhanmondi",
+      "gulshan",
+      "banani",
+      "uttara",
+      "mirpur",
+      "mohammadpur",
+      "motijheel",
+      "paltan",
+      "ramna",
+      "shahbag",
+      "tejgaon",
+      "badda",
+      "khilgaon",
+      "shyamoli",
+      "farmgate",
     ];
-    
-    const cityLower = city?.toLowerCase() || '';
-    const areaLower = area?.toLowerCase() || '';
-    
-    if (cityLower === 'dhaka' || dhakaAreas.some(dhakaArea => areaLower.includes(dhakaArea))) {
-      return 'dhaka';
+
+    const cityLower = city?.toLowerCase() || "";
+    const areaLower = area?.toLowerCase() || "";
+
+    if (
+      cityLower === "dhaka" ||
+      dhakaAreas.some((dhakaArea) => areaLower.includes(dhakaArea))
+    ) {
+      return "dhaka";
     }
-    return 'outside_dhaka';
+    return "outside_dhaka";
   };
-  
+
   const handleAddressSelect = (address) => {
     setSelectedAddressId(address._id);
     const shippingArea = determineShippingArea(address.city, address.area);
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       addressLine1: address.addressLine1,
       addressLine2: address.addressLine2 || "",
@@ -232,65 +196,54 @@ const CheckoutPage = () => {
       shippingArea: address.shippingArea || shippingArea,
     }));
   };
-  
+
   const handleCityChange = (city, area) => {
     const shippingArea = determineShippingArea(city, area);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       shippingArea,
     }));
   };
-  
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
-    if (name === 'city' || name === 'area') {
+
+    if (name === "city" || name === "area") {
       const newFormData = { ...formData, [name]: value };
       handleCityChange(
-        name === 'city' ? value : formData.city,
-        name === 'area' ? value : formData.area
+        name === "city" ? value : formData.city,
+        name === "area" ? value : formData.area,
       );
       setFormData(newFormData);
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: type === "checkbox" ? checked : value,
       }));
     }
-    
+
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
-  
-  const handleBillingChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      billingAddress: {
-        ...prev.billingAddress,
-        [name]: value,
-      },
-    }));
-  };
-  
+
   const validateStep1 = () => {
     const newErrors = {};
-    
-    if (!formData.firstName) newErrors.firstName = "First name is required";
-    if (!formData.lastName) newErrors.lastName = "Last name is required";
+
+    if (!formData.name) newErrors.name = "Full name is required";
     if (!formData.email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Email is invalid";
     if (!formData.phone) newErrors.phone = "Phone number is required";
     if (!formData.addressLine1) newErrors.addressLine1 = "Address is required";
     if (!formData.city) newErrors.city = "City is required";
     if (!formData.area) newErrors.area = "Area/Thana is required";
     if (!formData.postCode) newErrors.postCode = "Post code is required";
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   const validateStep2 = () => {
     if (!formData.shippingArea) {
       toast.error("Please select a shipping area");
@@ -298,37 +251,20 @@ const CheckoutPage = () => {
     }
     return true;
   };
-  
+
   const validateStep3 = () => {
     if (!formData.paymentMethod) {
       toast.error("Please select a payment method");
       return false;
     }
-    
-    if (formData.paymentMethod === "card") {
-      const newErrors = {};
-      if (!formData.cardNumber) newErrors.cardNumber = "Card number is required";
-      else if (!/^\d{16}$/.test(formData.cardNumber.replace(/\s/g, ""))) 
-        newErrors.cardNumber = "Invalid card number";
-      
-      if (!formData.cardName) newErrors.cardName = "Cardholder name is required";
-      if (!formData.expiryDate) newErrors.expiryDate = "Expiry date is required";
-      else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.expiryDate)) 
-        newErrors.expiryDate = "Invalid expiry date (MM/YY)";
-      
-      if (!formData.cvv) newErrors.cvv = "CVV is required";
-      else if (!/^\d{3,4}$/.test(formData.cvv)) 
-        newErrors.cvv = "Invalid CVV";
-      
-      setErrors(newErrors);
-      return Object.keys(newErrors).length === 0;
-    }
-    
     return true;
   };
-  
+
   const addNewAddress = (addressData) => {
-    const shippingArea = determineShippingArea(addressData.city, addressData.area);
+    const shippingArea = determineShippingArea(
+      addressData.city,
+      addressData.area,
+    );
     const newAddress = {
       _id: `addr_${Date.now()}`,
       ...addressData,
@@ -339,12 +275,12 @@ const CheckoutPage = () => {
     setShowAddAddressModal(false);
     toast.success("Address saved successfully");
   };
-  
+
   const deleteAddress = (addressId) => {
-    setSavedAddresses(savedAddresses.filter(addr => addr._id !== addressId));
+    setSavedAddresses(savedAddresses.filter((addr) => addr._id !== addressId));
     if (selectedAddressId === addressId) {
       setSelectedAddressId(null);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         addressLine1: "",
         addressLine2: "",
@@ -355,8 +291,164 @@ const CheckoutPage = () => {
     }
     toast.success("Address deleted");
   };
-  
-  
+
+  // Initialize SSL Commerce payment
+  const initiateSSLPayment = async () => {
+    try {
+      const orderData = {
+        total_amount: total,
+        currency: "BDT",
+        tran_id: `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        success_url: `${window.location.origin}/payment/success`,
+        fail_url: `${window.location.origin}/payment/fail`,
+        cancel_url: `${window.location.origin}/payment/cancel`,
+        ipn_url: `${window.location.origin}/api/payment/ipn`,
+        shipping_method: formData.shippingArea === "dhaka" ? "YES" : "NO",
+        product_name: "Fashion Products",
+        product_category: "Fashion",
+        product_profile: "general",
+        cus_name: formData.name,
+        cus_email: formData.email,
+        cus_add1: formData.addressLine1,
+        cus_add2: formData.addressLine2,
+        cus_city: formData.city,
+        cus_state: formData.area,
+        cus_postcode: formData.postCode,
+        cus_country: formData.country,
+        cus_phone: formData.phone,
+        ship_name: formData.name,
+        ship_add1: formData.addressLine1,
+        ship_add2: formData.addressLine2,
+        ship_city: formData.city,
+        ship_state: formData.area,
+        ship_postcode: formData.postCode,
+        ship_country: formData.country,
+        cart_items: items,
+      };
+
+      // Call your backend API to initiate SSL payment
+      const response = await fetch("/api/payment/ssl-init", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.redirectUrl) {
+        // Redirect to SSL Commerce payment page
+        window.location.href = data.redirectUrl;
+      } else {
+        throw new Error(data.message || "Payment initiation failed");
+      }
+    } catch (error) {
+      console.error("SSL Payment error:", error);
+      toast.error("Failed to initiate payment. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  // Handle Cash on Delivery
+  const handleCODOrder = async () => {
+    try {
+      const orderData = {
+        user: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          userId: user?._id || null,
+        },
+        shippingAddress: {
+          addressLine1: formData.addressLine1,
+          addressLine2: formData.addressLine2,
+          city: formData.city,
+          area: formData.area,
+          postCode: formData.postCode,
+          country: formData.country,
+        },
+        shippingArea: formData.shippingArea,
+        shippingCost: shippingCost,
+        paymentMethod: "cod",
+        paymentStatus: "pending",
+        orderStatus: "pending",
+        items: items.map((item) => ({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+        subtotal: subtotal,
+        tax: tax,
+        total: total,
+        notes: formData.notes,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Call your backend API to save COD order
+      const response = await api.post("/orders/cod", {
+        orderData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success("Order placed successfully!");
+        // Clear cart
+        if (clearCart) clearCart();
+        // Redirect to order confirmation
+        router.push(`/order-confirmation?orderId=${data.orderId}`);
+      } else {
+        throw new Error(data.message || "Failed to place order");
+      }
+    } catch (error) {
+      console.error("COD Order error:", error);
+      toast.error("Failed to place order. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const placeOrder = async () => {
+    if (!validateStep3()) return;
+
+    setLoading(true);
+
+    if (formData.paymentMethod === "ssl") {
+      await initiateSSLPayment();
+    } else {
+      await handleCODOrder();
+    }
+
+    setLoading(false);
+  };
+
+  // Save address if requested
+  const saveAddressIfNeeded = async () => {
+    if (formData.saveAddress && formData.addressName && user) {
+      const addressData = {
+        name: formData.addressName,
+        addressLine1: formData.addressLine1,
+        addressLine2: formData.addressLine2,
+        city: formData.city,
+        area: formData.area,
+        postCode: formData.postCode,
+        country: formData.country,
+        shippingArea: formData.shippingArea,
+      };
+
+      try {
+        await fetch("/api/addresses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(addressData),
+        });
+      } catch (error) {
+        console.error("Failed to save address:", error);
+      }
+    }
+  };
 
   const AddressModal = () => (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -367,20 +459,22 @@ const CheckoutPage = () => {
             <FaTimes />
           </button>
         </div>
-        
-        <form onSubmit={(e) => {
-          e.preventDefault();
-          const form = e.target;
-          addNewAddress({
-            name: form.addressName.value,
-            addressLine1: form.addressLine1.value,
-            addressLine2: form.addressLine2.value,
-            city: form.city.value,
-            area: form.area.value,
-            postCode: form.postCode.value,
-            country: form.country.value,
-          });
-        }}>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.target;
+            addNewAddress({
+              name: form.addressName.value,
+              addressLine1: form.addressLine1.value,
+              addressLine2: form.addressLine2.value,
+              city: form.city.value,
+              area: form.area.value,
+              postCode: form.postCode.value,
+              country: form.country.value,
+            });
+          }}
+        >
           <div className="space-y-3">
             <input
               name="addressName"
@@ -429,7 +523,7 @@ const CheckoutPage = () => {
               </select>
             </div>
           </div>
-          
+
           <div className="flex gap-3 mt-6">
             <button
               type="submit"
@@ -449,9 +543,9 @@ const CheckoutPage = () => {
       </div>
     </div>
   );
-  
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 md:py-12">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 md:py-12">
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Progress Steps */}
         <div className="mb-8">
@@ -487,7 +581,7 @@ const CheckoutPage = () => {
             ))}
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Checkout Form */}
           <div className="lg:col-span-2">
@@ -495,27 +589,34 @@ const CheckoutPage = () => {
               {/* Step 1: Shipping Information */}
               {step === 1 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-800">Shipping Information</h2>
-                  
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Shipping Information
+                  </h2>
+
                   {/* User Info Alert */}
-                  {user.isLoggedIn && (
+                  {user && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <p className="text-sm text-blue-700">
-                        Welcome back, {user.firstName}! Your information has been pre-filled.
+                        Welcome back, {user.name}! Your information has been
+                        pre-filled.
                       </p>
                     </div>
                   )}
-                  
+
                   {/* Saved Addresses */}
                   {savedAddresses.length > 0 && (
                     <div className="bg-amber-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-800 mb-3">Saved Addresses</h3>
+                      <h3 className="font-semibold text-gray-800 mb-3">
+                        Saved Addresses
+                      </h3>
                       <div className="space-y-2">
                         {savedAddresses.map((address) => (
                           <div
                             key={address._id}
                             className={`flex items-start gap-3 p-3 bg-white rounded-lg cursor-pointer hover:shadow-md transition ${
-                              selectedAddressId === address._id ? "ring-2 ring-amber-500" : ""
+                              selectedAddressId === address._id
+                                ? "ring-2 ring-amber-500"
+                                : ""
                             }`}
                             onClick={() => handleAddressSelect(address)}
                           >
@@ -528,13 +629,18 @@ const CheckoutPage = () => {
                             <div className="flex-1">
                               <p className="font-medium">{address.name}</p>
                               <p className="text-sm text-gray-600">
-                                {address.addressLine1}, {address.area}, {address.city} - {address.postCode}
+                                {address.addressLine1}, {address.area},{" "}
+                                {address.city} - {address.postCode}
                               </p>
                               <p className="text-xs text-amber-600 mt-1">
-                                {address.shippingArea === 'dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'}
+                                {address.shippingArea === "dhaka"
+                                  ? "Inside Dhaka"
+                                  : "Outside Dhaka"}
                               </p>
                               {address.isDefault && (
-                                <span className="text-xs text-amber-600 ml-2">Default</span>
+                                <span className="text-xs text-amber-600 ml-2">
+                                  Default
+                                </span>
                               )}
                             </div>
                             <button
@@ -557,45 +663,27 @@ const CheckoutPage = () => {
                       </button>
                     </div>
                   )}
-                  
+
                   {/* Personal Information */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
+                        errors.name ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                    {errors.name && (
+                      <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        First Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                          errors.firstName ? "border-red-500" : "border-gray-300"
-                        }`}
-                      />
-                      {errors.firstName && (
-                        <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
-                      )}
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Last Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                          errors.lastName ? "border-red-500" : "border-gray-300"
-                        }`}
-                      />
-                      {errors.lastName && (
-                        <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
-                      )}
-                    </div>
-                    
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Email *
@@ -610,10 +698,12 @@ const CheckoutPage = () => {
                         }`}
                       />
                       {errors.email && (
-                        <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.email}
+                        </p>
                       )}
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Phone *
@@ -629,17 +719,19 @@ const CheckoutPage = () => {
                         }`}
                       />
                       {errors.phone && (
-                        <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.phone}
+                        </p>
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Shipping Address */}
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                       <FaMapMarkerAlt /> Shipping Address
                     </h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -651,15 +743,19 @@ const CheckoutPage = () => {
                           value={formData.addressLine1}
                           onChange={handleInputChange}
                           className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                            errors.addressLine1 ? "border-red-500" : "border-gray-300"
+                            errors.addressLine1
+                              ? "border-red-500"
+                              : "border-gray-300"
                           }`}
                           placeholder="House/Building number, Street name"
                         />
                         {errors.addressLine1 && (
-                          <p className="text-red-500 text-xs mt-1">{errors.addressLine1}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.addressLine1}
+                          </p>
                         )}
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Address Line 2 (Optional)
@@ -673,7 +769,7 @@ const CheckoutPage = () => {
                           placeholder="Apartment, floor, landmark"
                         />
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -690,10 +786,12 @@ const CheckoutPage = () => {
                             placeholder="e.g., Dhaka, Chittagong"
                           />
                           {errors.city && (
-                            <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.city}
+                            </p>
                           )}
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Area/Thana *
@@ -709,11 +807,13 @@ const CheckoutPage = () => {
                             placeholder="e.g., Gulshan, Banani, Uttara"
                           />
                           {errors.area && (
-                            <p className="text-red-500 text-xs mt-1">{errors.area}</p>
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.area}
+                            </p>
                           )}
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -725,15 +825,19 @@ const CheckoutPage = () => {
                             value={formData.postCode}
                             onChange={handleInputChange}
                             className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                              errors.postCode ? "border-red-500" : "border-gray-300"
+                              errors.postCode
+                                ? "border-red-500"
+                                : "border-gray-300"
                             }`}
                             placeholder="e.g., 1213"
                           />
                           {errors.postCode && (
-                            <p className="text-red-500 text-xs mt-1">{errors.postCode}</p>
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.postCode}
+                            </p>
                           )}
                         </div>
-                        
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Country *
@@ -750,9 +854,9 @@ const CheckoutPage = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Save Address Option */}
-                  {user.isLoggedIn && (
+                  {user && (
                     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
                       <input
                         type="checkbox"
@@ -778,11 +882,12 @@ const CheckoutPage = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex justify-end">
                     <button
                       onClick={() => {
                         if (validateStep1()) {
+                          saveAddressIfNeeded();
                           setStep(2);
                         }
                       }}
@@ -793,22 +898,27 @@ const CheckoutPage = () => {
                   </div>
                 </div>
               )}
-              
+
               {/* Step 2: Shipping Method */}
               {step === 2 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-800">Select Shipping Area</h2>
-                  
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Select Shipping Area
+                  </h2>
+
                   {/* Shipping Info Badge */}
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-700">
-                      Based on your address: <strong>{formData.city}, {formData.area}</strong>
+                      Based on your address:{" "}
+                      <strong>
+                        {formData.city}, {formData.area}
+                      </strong>
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
                       Shipping cost is calculated based on delivery location
                     </p>
                   </div>
-                  
+
                   <div className="space-y-3">
                     {Object.values(shippingMethods).map((method) => (
                       <label
@@ -831,10 +941,16 @@ const CheckoutPage = () => {
                           <div>
                             <div className="flex items-center gap-2">
                               <method.icon className="text-amber-500" />
-                              <p className="font-semibold text-gray-800">{method.name}</p>
+                              <p className="font-semibold text-gray-800">
+                                {method.name}
+                              </p>
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">{method.days}</p>
-                            <p className="text-xs text-gray-400">{method.description}</p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {method.days}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {method.description}
+                            </p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -845,18 +961,17 @@ const CheckoutPage = () => {
                       </label>
                     ))}
                   </div>
-                  
+
                   {/* Delivery Time Note */}
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                     <p className="text-xs text-green-700">
-                      📦 Estimated delivery time: {
-                        formData.shippingArea === 'dhaka' 
-                          ? '1-2 business days' 
-                          : '3-5 business days'
-                      }
+                      📦 Estimated delivery time:{" "}
+                      {formData.shippingArea === "dhaka"
+                        ? "1-2 business days"
+                        : "3-5 business days"}
                     </p>
                   </div>
-                  
+
                   <div className="flex justify-between gap-4">
                     <button
                       onClick={() => setStep(1)}
@@ -877,226 +992,99 @@ const CheckoutPage = () => {
                   </div>
                 </div>
               )}
-              
+
               {/* Step 3: Payment */}
               {step === 3 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-800">Payment Method</h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    {[
-                      { id: "card", name: "Credit/Debit Card", icon: FaCreditCard },
-                      { id: "bkash", name: "bKash", icon: FaMoneyBillWave },
-                      { id: "nagad", name: "Nagad", icon: FaMoneyBillWave },
-                      { id: "cod", name: "Cash on Delivery", icon: FaMoneyBillWave },
-                    ].map((method) => (
-                      <label
-                        key={method.id}
-                        className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition ${
-                          formData.paymentMethod === method.id
-                            ? "border-amber-500 bg-amber-50"
-                            : "border-gray-200 hover:border-amber-300"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value={method.id}
-                          checked={formData.paymentMethod === method.id}
-                          onChange={handleInputChange}
-                          className="text-amber-500"
-                        />
-                        <method.icon className="text-2xl" />
-                        <span className="font-medium">{method.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                  
-                  {formData.paymentMethod === "card" && (
-                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-semibold text-gray-800">Card Details</h3>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Card Number *
-                        </label>
-                        <input
-                          type="text"
-                          name="cardNumber"
-                          value={formData.cardNumber}
-                          onChange={handleInputChange}
-                          placeholder="1234 5678 9012 3456"
-                          maxLength="19"
-                          className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                            errors.cardNumber ? "border-red-500" : "border-gray-300"
-                          }`}
-                        />
-                        {errors.cardNumber && (
-                          <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Cardholder Name *
-                        </label>
-                        <input
-                          type="text"
-                          name="cardName"
-                          value={formData.cardName}
-                          onChange={handleInputChange}
-                          placeholder="Name on card"
-                          className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                            errors.cardName ? "border-red-500" : "border-gray-300"
-                          }`}
-                        />
-                        {errors.cardName && (
-                          <p className="text-red-500 text-xs mt-1">{errors.cardName}</p>
-                        )}
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Expiry Date *
-                          </label>
-                          <input
-                            type="text"
-                            name="expiryDate"
-                            value={formData.expiryDate}
-                            onChange={handleInputChange}
-                            placeholder="MM/YY"
-                            maxLength="5"
-                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                              errors.expiryDate ? "border-red-500" : "border-gray-300"
-                            }`}
-                          />
-                          {errors.expiryDate && (
-                            <p className="text-red-500 text-xs mt-1">{errors.expiryDate}</p>
-                          )}
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            CVV *
-                          </label>
-                          <input
-                            type="password"
-                            name="cvv"
-                            value={formData.cvv}
-                            onChange={handleInputChange}
-                            placeholder="123"
-                            maxLength="4"
-                            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                              errors.cvv ? "border-red-500" : "border-gray-300"
-                            }`}
-                          />
-                          {errors.cvv && (
-                            <p className="text-red-500 text-xs mt-1">{errors.cvv}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {formData.paymentMethod === "bkash" && (
-                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-semibold text-gray-800">bKash Payment</h3>
-                      <p className="text-sm text-gray-600">
-                        You will be redirected to bKash to complete your payment.
-                      </p>
-                      <div className="bg-blue-50 p-3 rounded">
-                        <p className="text-xs text-blue-700">
-                          After completing payment, your order will be confirmed automatically.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {formData.paymentMethod === "nagad" && (
-                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-semibold text-gray-800">Nagad Payment</h3>
-                      <p className="text-sm text-gray-600">
-                        You will be redirected to Nagad to complete your payment.
-                      </p>
-                    </div>
-                  )}
-                  
-                  {formData.paymentMethod === "cod" && (
-                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                      <h3 className="font-semibold text-gray-800">Cash on Delivery</h3>
-                      <p className="text-sm text-gray-600">
-                        Pay in cash when your order is delivered.
-                      </p>
-                      <div className="bg-yellow-50 p-3 rounded">
-                        <p className="text-xs text-yellow-700">
-                          Additional ৳20 will be charged for COD service.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <div className="flex items-center gap-3 mb-4">
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Select Payment Method
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* SSL Commerce Option */}
+                    <label
+                      className={`flex items-start gap-4 p-5 border-2 rounded-xl cursor-pointer transition ${
+                        formData.paymentMethod === "ssl"
+                          ? "border-amber-500 bg-amber-50 shadow-md"
+                          : "border-gray-200 hover:border-amber-300 bg-white"
+                      }`}
+                    >
                       <input
-                        type="checkbox"
-                        name="sameAsShipping"
-                        checked={formData.sameAsShipping}
+                        type="radio"
+                        name="paymentMethod"
+                        value="ssl"
+                        checked={formData.paymentMethod === "ssl"}
                         onChange={handleInputChange}
-                        className="w-5 h-5 text-amber-500 rounded"
+                        className="mt-1 text-amber-500"
                       />
-                      <label className="font-medium text-gray-700">
-                        Billing address same as shipping address
-                      </label>
-                    </div>
-                    
-                    {!formData.sameAsShipping && (
-                      <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-                        <h3 className="font-semibold text-gray-800">Billing Address</h3>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Address Line 1 *
-                          </label>
-                          <input
-                            type="text"
-                            name="addressLine1"
-                            value={formData.billingAddress.addressLine1}
-                            onChange={handleBillingChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-amber-500"
-                          />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FaShieldAlt className="text-2xl text-blue-600" />
+                          <p className="font-bold text-gray-800 text-lg">
+                            SSL Commerce
+                          </p>
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <input
-                            type="text"
-                            name="city"
-                            placeholder="City"
-                            value={formData.billingAddress.city}
-                            onChange={handleBillingChange}
-                            className="px-4 py-2 border border-gray-300 rounded-lg"
-                          />
-                          <input
-                            type="text"
-                            name="area"
-                            placeholder="Area/Thana"
-                            value={formData.billingAddress.area}
-                            onChange={handleBillingChange}
-                            className="px-4 py-2 border border-gray-300 rounded-lg"
-                          />
-                          <input
-                            type="text"
-                            name="postCode"
-                            placeholder="Post Code"
-                            value={formData.billingAddress.postCode}
-                            onChange={handleBillingChange}
-                            className="px-4 py-2 border border-gray-300 rounded-lg"
-                          />
+                        <p className="text-sm text-gray-600">
+                          Pay with Credit/Debit Card, bKash, Nagad, Rocket, or
+                          Mobile Banking
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                            Visa
+                          </span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                            Mastercard
+                          </span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                            bKash
+                          </span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                            Nagad
+                          </span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                            Amex
+                          </span>
+                        </div>
+                        <div className="mt-3 p-2 bg-blue-50 rounded">
+                          <p className="text-xs text-blue-700">
+                            🔒 Secure payment gateway. All major payment methods
+                            accepted.
+                          </p>
                         </div>
                       </div>
-                    )}
+                    </label>
+
+                    {/* Cash on Delivery Option */}
+                    <label
+                      className={`flex items-start gap-4 p-5 border-2 rounded-xl cursor-pointer transition ${
+                        formData.paymentMethod === "cod"
+                          ? "border-amber-500 bg-amber-50 shadow-md"
+                          : "border-gray-200 hover:border-amber-300 bg-white"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="cod"
+                        checked={formData.paymentMethod === "cod"}
+                        onChange={handleInputChange}
+                        className="mt-1 text-amber-500"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FaMoneyBillWave className="text-2xl text-green-600" />
+                          <p className="font-bold text-gray-800 text-lg">
+                            Cash on Delivery
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          Pay with cash when your order is delivered
+                        </p>
+                      </div>
+                    </label>
                   </div>
-                  
+
+                  {/* Order Notes */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Order Notes (Optional)
@@ -1110,7 +1098,7 @@ const CheckoutPage = () => {
                       placeholder="Special instructions for delivery..."
                     />
                   </div>
-                  
+
                   <div className="flex justify-between gap-4">
                     <button
                       onClick={() => setStep(2)}
@@ -1119,7 +1107,7 @@ const CheckoutPage = () => {
                       ← Back
                     </button>
                     <button
-                      onClick={""}
+                      onClick={placeOrder}
                       disabled={loading}
                       className="px-6 py-3 bg-linear-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition font-semibold disabled:opacity-50 flex items-center gap-2"
                     >
@@ -1139,23 +1127,36 @@ const CheckoutPage = () => {
               )}
             </div>
           </div>
-          
+
           {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
-              
+              <h2 className="text-xl font-bold text-gray-800 mb-4">
+                Order Summary
+              </h2>
+
               {/* Cart Items */}
               <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex gap-3">
-                    <div className="w-16 h-16 bg-amber-100 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center">
-                      <GiHandBag className="text-3xl text-amber-500" />
-                    </div>
+                {cartItems.map((item, index) => (
+                  <div key={item.id || index} className="flex gap-3">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                        <GiHandBag className="text-3xl text-amber-500" />
+                      </div>
+                    )}
                     <div className="flex-1">
-                      <p className="font-medium text-gray-800 text-sm line-clamp-2">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.brand}</p>
-                      <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                      <p className="font-medium text-gray-800 text-sm line-clamp-2">
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Qty: {item.quantity}
+                      </p>
                       <p className="text-sm font-semibold text-amber-600">
                         ৳{(item.price * item.quantity).toFixed(2)}
                       </p>
@@ -1163,14 +1164,20 @@ const CheckoutPage = () => {
                   </div>
                 ))}
               </div>
-              
+
               <div className="border-t border-gray-200 pt-4 space-y-2">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
                   <span>৳{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>Shipping ({formData.shippingArea === 'dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'})</span>
+                  <span>
+                    Shipping (
+                    {formData.shippingArea === "dhaka"
+                      ? "Inside Dhaka"
+                      : "Outside Dhaka"}
+                    )
+                  </span>
                   <span>৳{shippingCost.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
@@ -1184,37 +1191,37 @@ const CheckoutPage = () => {
                   </div>
                 </div>
               </div>
-              
-              {/* Shipping Info Note */}
+
+              {/* Payment Method Info */}
               <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                 <p className="text-xs text-gray-600 flex items-center gap-1">
-                  <FaTruck className="text-amber-500" />
-                  Shipping to: {formData.shippingArea === 'dhaka' ? 'Inside Dhaka' : 'Outside Dhaka'}
+                  <FaCreditCard className="text-amber-500" />
+                  Payment:{" "}
+                  {formData.paymentMethod === "ssl"
+                    ? "SSL Commerce"
+                    : "Cash on Delivery"}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Estimated delivery: {
-                    formData.shippingArea === 'dhaka' 
-                      ? '1-2 business days' 
-                      : '3-5 business days'
-                  }
+                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                  <FaTruck />
+                  Shipping to:{" "}
+                  {formData.shippingArea === "dhaka"
+                    ? "Inside Dhaka"
+                    : "Outside Dhaka"}
                 </p>
               </div>
-              
-              {/* Payment Methods Accepted */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-500 text-center mb-3">We Accept</p>
-                <div className="flex justify-center gap-3">
-                  <FaCcVisa className="text-3xl text-gray-400" />
-                  <FaCcMastercard className="text-3xl text-gray-400" />
-                  <FaCcPaypal className="text-3xl text-gray-400" />
-                  <FaCcAmex className="text-3xl text-gray-400" />
-                </div>
+
+              {/* Security Badge */}
+              <div className="mt-6 pt-4 border-t border-gray-200 text-center">
+                <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
+                  <FaLock className="text-green-600" />
+                  Secure Checkout
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Address Modal */}
       {showAddAddressModal && <AddressModal />}
     </div>
