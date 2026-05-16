@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useCreateProduct, useUpdateProduct } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useBrands } from '@/hooks/useBrands';
-import { X, Plus, Loader2, Package, DollarSign, Box, Image, Truck, Calendar } from 'lucide-react';
+import { X, Plus, Loader2, Package, DollarSign, Box, Image, Truck, Calendar, Ruler, Shirt, Star, Crown, Award } from 'lucide-react';
+import ProductSizeManager from '../ProductSizeManager';
 
 const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -30,6 +31,10 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     trackInventory: true,
     allowBackorder: false,
     
+    // Size Management
+    hasSizes: false,
+    sizes: [],
+    
     // Images
     images: [],
     
@@ -37,6 +42,8 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     status: 'draft',
     isActive: true,
     isFeatured: false,
+    isPremium: false,     // Added
+    isBest: false,        // Added
     isPublished: false,
     isFreeShipping: false,
     
@@ -47,6 +54,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
   const [errors, setErrors] = useState({});
   const [imageInput, setImageInput] = useState({ url: '', alt: '' });
   const [showVariants, setShowVariants] = useState(false);
+  const [sizeEnabled, setSizeEnabled] = useState(false);
   
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
@@ -76,14 +84,19 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
         lowStockThreshold: editingProduct.lowStockThreshold || '10',
         trackInventory: editingProduct.trackInventory !== false,
         allowBackorder: editingProduct.allowBackorder || false,
+        hasSizes: editingProduct.hasSizes || false,
+        sizes: editingProduct.sizes || [],
         images: editingProduct.images || [],
         status: editingProduct.status || 'draft',
         isActive: editingProduct.isActive !== false,
         isFeatured: editingProduct.isFeatured || false,
+        isPremium: editingProduct.isPremium || false,   // Added
+        isBest: editingProduct.isBest || false,          // Added
         isPublished: editingProduct.isPublished || false,
         isFreeShipping: editingProduct.isFreeShipping || false,
         variants: editingProduct.variants || [],
       });
+      setSizeEnabled(editingProduct.hasSizes || false);
     }
   }, [editingProduct]);
 
@@ -95,6 +108,36 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleSizesChange = (sizes) => {
+    // Calculate total quantity from all sizes
+    const totalQuantity = sizes.reduce((sum, size) => sum + (size.quantity || 0), 0);
+    
+    setFormData(prev => ({
+      ...prev,
+      sizes: sizes,
+      quantity: sizeEnabled ? totalQuantity : prev.quantity,
+      hasSizes: sizeEnabled && sizes.length > 0,
+    }));
+  };
+
+  const handleSizeToggle = (enabled) => {
+    setSizeEnabled(enabled);
+    
+    if (!enabled) {
+      // Clear sizes when disabling size management
+      setFormData(prev => ({
+        ...prev,
+        sizes: [],
+        hasSizes: false,
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        hasSizes: true,
+      }));
     }
   };
 
@@ -138,6 +181,20 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     if (!formData.category) newErrors.category = 'Category is required';
     if (!formData.brand) newErrors.brand = 'Brand is required';
     
+    // Validate sizes if enabled
+    if (sizeEnabled && formData.sizes.length === 0) {
+      newErrors.sizes = 'At least one size is required when size management is enabled';
+    }
+    
+    // Check for duplicate size names
+    if (sizeEnabled && formData.sizes.length > 0) {
+      const sizeNames = formData.sizes.map(s => s.name.toLowerCase());
+      const hasDuplicates = sizeNames.some((name, index) => sizeNames.indexOf(name) !== index);
+      if (hasDuplicates) {
+        newErrors.sizes = 'Duplicate size names are not allowed';
+      }
+    }
+    
     if (formData.discountPrice && parseFloat(formData.discountPrice) >= parseFloat(formData.regularPrice)) {
       newErrors.discountPrice = 'Discount price must be less than regular price';
     }
@@ -160,8 +217,10 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
       regularPrice: parseFloat(formData.regularPrice),
       discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : null,
       costPerItem: formData.costPerItem ? parseFloat(formData.costPerItem) : null,
-      quantity: parseInt(formData.quantity) || 0,
+      quantity: sizeEnabled ? formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0) : (parseInt(formData.quantity) || 0),
       lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
+      hasSizes: sizeEnabled && formData.sizes.length > 0,
+      sizes: sizeEnabled ? formData.sizes : [],
     };
     
     try {
@@ -182,10 +241,13 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
   };
 
   const isLoading = createProduct.isLoading || updateProduct.isLoading;
+  
+  // Calculate total quantity from sizes for display
+  const totalSizeQuantity = formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0);
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 max-h-[90vh] overflow-y-auto">
-      <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-4 border-b">
+      <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-4 border-b z-10">
         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <Package size={24} className="text-blue-600" />
           {editingProduct ? 'Edit Product' : 'Add New Product'}
@@ -410,6 +472,68 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
           </div>
         </div>
         
+        {/* ================= SIZE MANAGEMENT ================= */}
+        <div className="border-b pb-4">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
+            <Ruler size={18} className="text-indigo-600" />
+            Size Management
+          </h3>
+          
+          <div className="mb-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sizeEnabled}
+                onChange={(e) => handleSizeToggle(e.target.checked)}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                disabled={isLoading}
+              />
+              <span className="text-sm font-medium text-gray-700">
+                Enable size-based inventory management
+              </span>
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              Enable this if your product comes in different sizes (e.g., S, M, L, XL)
+            </p>
+          </div>
+          
+          {sizeEnabled && (
+            <div className="mt-4">
+              <ProductSizeManager
+                sizes={formData.sizes}
+                onSizesChange={handleSizesChange}
+                disabled={isLoading}
+              />
+              {errors.sizes && (
+                <p className="text-red-500 text-xs mt-2">{errors.sizes}</p>
+              )}
+              
+              {/* Size Summary */}
+              {formData.sizes.length > 0 && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm font-medium text-blue-800">Size Inventory Summary</p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Total units across all sizes: <strong>{totalSizeQuantity}</strong>
+                      </p>
+                    </div>
+                    <Shirt size={20} className="text-blue-500" />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {formData.sizes.map(size => (
+                      <span key={size.name} className="text-xs bg-white px-2 py-1 rounded-full shadow-sm">
+                        {size.name}: {size.quantity} units
+                        {size.extraPrice > 0 && ` (+৳${size.extraPrice})`}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        
         {/* ================= INVENTORY ================= */}
         <div className="border-b pb-4">
           <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
@@ -434,20 +558,39 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
               {errors.sku && <p className="text-red-500 text-xs mt-1">{errors.sku}</p>}
             </div>
             
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Quantity
-              </label>
-              <input
-                type="number"
-                name="quantity"
-                value={formData.quantity}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                disabled={isLoading}
-                placeholder="0"
-              />
-            </div>
+            {!sizeEnabled && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Quantity
+                </label>
+                <input
+                  type="number"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  disabled={isLoading}
+                  placeholder="0"
+                />
+              </div>
+            )}
+            
+            {sizeEnabled && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Total Quantity (Auto-calculated)
+                </label>
+                <input
+                  type="text"
+                  value={`${totalSizeQuantity} units`}
+                  disabled
+                  className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-600"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Automatically calculated from sizes above
+                </p>
+              </div>
+            )}
             
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -569,9 +712,12 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
           </div>
         </div>
         
-        {/* ================= STATUS ================= */}
+        {/* ================= STATUS & VISIBILITY ================= */}
         <div className="border-b pb-4">
-          <h3 className="text-lg font-semibold mb-4 text-gray-700">Status & Visibility</h3>
+          <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
+            <Star size={18} className="text-yellow-600" />
+            Status & Visibility
+          </h3>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -592,36 +738,74 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             </div>
           </div>
           
-          <div className="mt-3 space-y-2">
-            <label className="flex items-center gap-3">
+          <div className="mt-4 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 name="isActive"
                 checked={formData.isActive}
                 onChange={handleChange}
+                className="w-4 h-4 text-blue-600 rounded"
               />
-              <span className="text-sm text-gray-700">Active</span>
+              <span className="text-sm text-gray-700">Active Product</span>
             </label>
             
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                name="isFeatured"
-                checked={formData.isFeatured}
-                onChange={handleChange}
-              />
-              <span className="text-sm text-gray-700">Featured Product</span>
-            </label>
-            
-            <label className="flex items-center gap-3">
+            <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 name="isPublished"
                 checked={formData.isPublished}
                 onChange={handleChange}
+                className="w-4 h-4 text-blue-600 rounded"
               />
-              <span className="text-sm text-gray-700">Published</span>
+              <span className="text-sm text-gray-700">Published (Visible on Store)</span>
             </label>
+            
+            <div className="border-t pt-3 mt-2">
+              <p className="text-sm font-medium text-gray-700 mb-2">Product Badges & Labels</p>
+              
+              <label className="flex items-center gap-3 cursor-pointer mb-2">
+                <input
+                  type="checkbox"
+                  name="isFeatured"
+                  checked={formData.isFeatured}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-yellow-600 rounded"
+                />
+                <span className="text-sm text-gray-700 flex items-center gap-1">
+                  <Star size={14} className="text-yellow-500" />
+                  Featured Product (Shows in featured sections)
+                </span>
+              </label>
+              
+              <label className="flex items-center gap-3 cursor-pointer mb-2">
+                <input
+                  type="checkbox"
+                  name="isPremium"
+                  checked={formData.isPremium}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-purple-600 rounded"
+                />
+                <span className="text-sm text-gray-700 flex items-center gap-1">
+                  <Crown size={14} className="text-purple-500" />
+                  Premium Product (High-end/Luxury items)
+                </span>
+              </label>
+              
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="isBest"
+                  checked={formData.isBest}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-red-600 rounded"
+                />
+                <span className="text-sm text-gray-700 flex items-center gap-1">
+                  <Award size={14} className="text-red-500" />
+                  Best Seller (Top selling products)
+                </span>
+              </label>
+            </div>
           </div>
         </div>
         

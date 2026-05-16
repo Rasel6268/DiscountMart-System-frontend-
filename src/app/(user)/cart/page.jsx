@@ -1,4 +1,3 @@
-// app/cart/page.js or pages/cart.js
 "use client";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
@@ -14,8 +13,12 @@ import {
   FaCcMastercard,
   FaCcPaypal,
   FaCcAmex,
+  FaMale,
+  FaFemale,
+  FaVenusMars,
+  FaChild,
 } from "react-icons/fa";
-import { GiHandBag } from "react-icons/gi"
+import { GiHandBag } from "react-icons/gi";
 import { useCart } from "@/hooks/useCart";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -34,6 +37,8 @@ const CartPage = () => {
     clearCart,
     getTotalItems,
     getTotalPrice,
+    getCartSummary,
+    getItemDisplayName,
   } = useCart();
 
   const [cartItems, setCartItems] = useState([]);
@@ -41,6 +46,27 @@ const CartPage = () => {
   const [total, setTotal] = useState(0);
   const [savedForLater, setSavedForLater] = useState([]);
 
+  // Get size type icon
+  const getSizeTypeIcon = (type) => {
+    if (!type) return <FaVenusMars className="text-purple-500" />;
+    switch(type) {
+      case 'men': return <FaMale className="text-blue-500" />;
+      case 'women': return <FaFemale className="text-pink-500" />;
+      case 'kids': return <FaChild className="text-green-500" />;
+      default: return <FaVenusMars className="text-purple-500" />;
+    }
+  };
+
+  // Get size type label
+  const getSizeTypeLabel = (type) => {
+    if (!type) return 'Unisex';
+    switch(type) {
+      case 'men': return "Men's";
+      case 'women': return "Women's";
+      case 'kids': return "Kids'";
+      default: return 'Unisex';
+    }
+  };
 
   useEffect(() => {
     setCartItems(items);
@@ -63,32 +89,42 @@ const CartPage = () => {
   }, [subtotal, shippingCost, discount]);
 
   // Handle quantity update
-  const handleQuantityUpdate = (productId, newQuantity) => {
+  const handleQuantityUpdate = (productId, newQuantity, size = null) => {
     if (newQuantity < 1) {
       toast.error("Quantity cannot be less than 1");
       return;
     }
-    updateQuantity(productId, newQuantity);
+    updateQuantity(productId, newQuantity, size);
     toast.success("Cart updated");
   };
 
   // Handle remove item
-  const handleRemoveItem = (productId, productName) => {
-    removeFromCart(productId);
-    toast.success(`${productName} removed from cart`);
+  const handleRemoveItem = (productId, size, productName) => {
+    removeFromCart(productId, size);
+    const sizeText = size ? ` (Size: ${size.name})` : '';
+    toast.success(`${productName}${sizeText} removed from cart`);
   };
 
   // Handle save for later
   const handleSaveForLater = (item) => {
-    removeFromCart(item.productId);
+    removeFromCart(item.productId, item.size);
     setSavedForLater([...savedForLater, item]);
-    toast.success(`${item.name} saved for later`);
+    const sizeText = item.size ? ` (Size: ${item.size.name})` : '';
+    toast.success(`${item.name}${sizeText} saved for later`);
   };
 
   // Handle move to cart from saved
   const handleMoveToCart = (item) => {
-    setSavedForLater(savedForLater.filter(i => i.productId !== item.productId));
-    updateQuantity(item.productId, item.quantity);
+    setSavedForLater(savedForLater.filter(i => 
+      i.productId !== item.productId || 
+      (i.size?.name !== item.size?.name)
+    ));
+    // Add back to cart with same size
+    const cartItem = {
+      ...item,
+      quantity: item.quantity,
+    };
+    // This would need to call addToCart with the saved item
     toast.success(`${item.name} moved to cart`);
   };
 
@@ -101,7 +137,6 @@ const CartPage = () => {
     
     try {
       // Simulate API call for coupon validation
-      // Replace with actual API call
       const response = await fetch("/api/coupons/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,10 +167,7 @@ const CartPage = () => {
     
     try {
       // Simulate checkout process
-      // Replace with actual checkout API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
-     
       router.push("/checkout");
     } catch (error) {
       toast.error("Failed to process checkout");
@@ -221,7 +253,7 @@ const CartPage = () => {
                     <tbody>
                       {cartItems.map((item) => (
                         <tr
-                          key={item.productId}
+                          key={`${item.productId}_${item.size?.name || 'nosize'}`}
                           className="border-b border-gray-100 hover:bg-amber-50/30 transition-colors"
                         >
                           {/* Product Info */}
@@ -247,9 +279,36 @@ const CartPage = () => {
                                 >
                                   {item.name}
                                 </Link>
-                                {item.variant && (
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Variant: {item.variant}
+                                
+                                {/* Size Information */}
+                                {item.size && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <div className="flex items-center gap-1">
+                                      {getSizeTypeIcon(item.size.type)}
+                                      <span className="text-xs font-medium text-gray-600">
+                                        {getSizeTypeLabel(item.size.type)}
+                                      </span>
+                                    </div>
+                                    <span className="text-xs bg-amber-100 px-2 py-0.5 rounded-full text-amber-700 font-medium">
+                                      Size: {item.size.name}
+                                    </span>
+                                    {item.size.extraPrice > 0 && (
+                                      <span className="text-xs text-green-600">
+                                        +{formatPrice(item.size.extraPrice)}
+                                      </span>
+                                    )}
+                                    {item.size.sku && (
+                                      <span className="text-xs text-gray-400">
+                                        SKU: {item.size.sku}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* Original price if discounted */}
+                                {item.originalPrice && item.originalPrice > item.price && (
+                                  <p className="text-xs text-gray-400 line-through mt-1">
+                                    {formatPrice(item.originalPrice)}
                                   </p>
                                 )}
                               </div>
@@ -258,9 +317,16 @@ const CartPage = () => {
 
                           {/* Price */}
                           <td className="px-4 py-4">
-                            <span className="text-gray-700 font-medium">
-                              {formatPrice(item.price)}
-                            </span>
+                            <div>
+                              <span className="text-gray-700 font-medium">
+                                {formatPrice(item.price)}
+                              </span>
+                              {item.size?.extraPrice > 0 && (
+                                <p className="text-xs text-gray-400">
+                                  Base: {formatPrice(item.price - item.size.extraPrice)}
+                                </p>
+                              )}
+                            </div>
                           </td>
 
                           {/* Quantity */}
@@ -270,7 +336,8 @@ const CartPage = () => {
                                 onClick={() =>
                                   handleQuantityUpdate(
                                     item.productId,
-                                    item.quantity - 1
+                                    item.quantity - 1,
+                                    item.size
                                   )
                                 }
                                 className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition"
@@ -284,7 +351,8 @@ const CartPage = () => {
                                 onClick={() =>
                                   handleQuantityUpdate(
                                     item.productId,
-                                    item.quantity + 1
+                                    item.quantity + 1,
+                                    item.size
                                   )
                                 }
                                 className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition"
@@ -292,6 +360,10 @@ const CartPage = () => {
                                 <FaPlus className="text-xs text-gray-600" />
                               </button>
                             </div>
+                            {/* Stock indicator */}
+                            {item.maxStock && item.quantity >= item.maxStock && (
+                              <p className="text-xs text-red-500 mt-1">Max stock reached</p>
+                            )}
                           </td>
 
                           {/* Total */}
@@ -305,9 +377,7 @@ const CartPage = () => {
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={() =>
-                                  handleSaveForLater(item)
-                                }
+                                onClick={() => handleSaveForLater(item)}
                                 className="p-2 text-gray-500 hover:text-amber-600 transition"
                                 title="Save for later"
                               >
@@ -327,7 +397,7 @@ const CartPage = () => {
                               </button>
                               <button
                                 onClick={() =>
-                                  handleRemoveItem(item.productId, item.name)
+                                  handleRemoveItem(item.productId, item.size, item.name)
                                 }
                                 className="p-2 text-red-500 hover:text-red-700 transition"
                                 title="Remove"
@@ -374,9 +444,9 @@ const CartPage = () => {
                     </h3>
                   </div>
                   <div className="divide-y divide-gray-100">
-                    {savedForLater.map((item) => (
+                    {savedForLater.map((item, idx) => (
                       <div
-                        key={item.productId}
+                        key={`saved_${item.productId}_${item.size?.name || 'nosize'}_${idx}`}
                         className="p-4 flex items-center justify-between hover:bg-amber-50/30 transition-colors"
                       >
                         <div className="flex items-center gap-3">
@@ -397,6 +467,12 @@ const CartPage = () => {
                             <p className="font-medium text-gray-800">
                               {item.name}
                             </p>
+                            {item.size && (
+                              <p className="text-xs text-gray-500">
+                                Size: {item.size.name}
+                                {item.size.type && ` (${item.size.type})`}
+                              </p>
+                            )}
                             <p className="text-sm text-amber-600">
                               {formatPrice(item.price)}
                             </p>
@@ -429,23 +505,6 @@ const CartPage = () => {
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal ({getTotalItems()} items)</span>
                     <span className="font-medium">{formatPrice(subtotal)}</span>
-                  </div>
-
-                  {/* Shipping */}
-                  <div className="flex justify-between text-gray-600">
-                    <span>Shipping</span>
-                    <div>
-                      <select
-                        value={shippingCost}
-                        onChange={(e) => setShippingCost(Number(e.target.value))}
-                        className="text-sm border border-amber-200 rounded-lg px-2 py-1 focus:outline-none focus:border-amber-500"
-                      >
-                        <option value="0">Free Shipping ($0)</option>
-                        <option value="5.99">Standard ($5.99)</option>
-                        <option value="12.99">Express ($12.99)</option>
-                        <option value="24.99">Overnight ($24.99)</option>
-                      </select>
-                    </div>
                   </div>
 
                   {/* Coupon Code */}
@@ -497,7 +556,7 @@ const CartPage = () => {
                   <button
                     onClick={handleCheckout}
                     disabled={isProcessing || cartItems.length === 0}
-                    className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-linear-to-r from-amber-500 to-amber-600 text-white rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all duration-300 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isProcessing ? (
                       <>
@@ -522,15 +581,6 @@ const CartPage = () => {
                       <FaCcMastercard className="text-3xl text-gray-400" />
                       <FaCcPaypal className="text-3xl text-gray-400" />
                       <FaCcAmex className="text-3xl text-gray-400" />
-                    </div>
-                  </div>
-
-                  {/* Trust Badges */}
-                  <div className="pt-4 text-center">
-                    <div className="flex justify-center gap-4 text-xs text-gray-500">
-                      <span>🔒 Secure Checkout</span>
-                      <span>🚚 Free Returns</span>
-                      <span>💯 100% Authentic</span>
                     </div>
                   </div>
                 </div>

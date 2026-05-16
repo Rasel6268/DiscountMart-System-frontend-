@@ -10,7 +10,7 @@ import {
   FaClock,
   FaGift,
   FaFire,
-  FaShoppingCart 
+  FaShoppingCart,
 } from "react-icons/fa";
 import Link from "next/link";
 import { FaBangladeshiTakaSign } from "react-icons/fa6";
@@ -21,11 +21,10 @@ import { useAuth } from "@/AuthProvider/AuthProvider";
 import { useCart } from "@/hooks/useCart";
 
 const Home = () => {
-  const {user,loading} = useAuth()
-  const{items} = useCart()
-  console.log(items);
-  console.log(user);
-   return (
+  const { user, loading } = useAuth();
+  const { items } = useCart();
+
+  return (
     <section>
       {/* Premium Hero Section */}
       <div className="relative overflow-hidden">
@@ -103,24 +102,24 @@ const Home = () => {
                   </h1>
                   <div className="grid grid-cols-4 gap-4">
                     {[
-                      "/download.png",
-                      "/chanel-removebg-preview.png",
-                      "/dior-removebg-preview.png",
-                      "/images-removebg-preview.png",
-                      "/puma-removebg-preview.png",
-                      "/lg-removebg-preview.png",
-                      "/images__1_-removebg-preview.png",
-                      "/puma-removebg-preview.png",
+                      "https://res.cloudinary.com/doumlnejx/image/upload/v1778918387/apex_logo_ozlijj.png",
+                      "https://res.cloudinary.com/doumlnejx/image/upload/v1778918387/bata_alnz3b.webp",
+                      "https://res.cloudinary.com/doumlnejx/image/upload/v1778918931/channels4_profile_hrmiwh.png",
+                      "https://res.cloudinary.com/doumlnejx/image/upload/v1778919215/Lotto_Sport_Italia_logo_ekwvux.svg",
+                      "https://res.cloudinary.com/doumlnejx/image/upload/v1778919499/Vibrant_Logo_New_1200x628_7acbe7e3-4068-4c69-a7b6-65159ca1822a_1_hlhazj.webp",
+                      "https://res.cloudinary.com/doumlnejx/image/upload/v1778920157/images_r1xpgh.png",
+                      "https://res.cloudinary.com/doumlnejx/image/upload/v1778920468/Gemini_Generated_Image_cm0ma9cm0ma9cm0m_bcj1fo.png",
+                      "https://res.cloudinary.com/doumlnejx/image/upload/v1778921661/Gemini_Generated_Image_tzxey4tzxey4tzxe_fzeixz.png",
                     ].map((brand, index) => (
                       <div
                         key={index}
-                        className="bg-amber-50 p-3 rounded-xl hover:bg-amber-100 transition-colors duration-300 flex items-center justify-center border border-amber-200"
+                        className=" rounded-xl transition-colors duration-300 flex items-center justify-center border"
                       >
                         <Image
                           src={brand}
-                          width={32}
+                          width={45}
                           height={32}
-                          className="h-8 object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
+                           className="w-3/4 h-3/4 object-contain"
                           alt="Brand"
                         />
                       </div>
@@ -140,7 +139,9 @@ const Home = () => {
                         LIMITED TIME OFFER
                       </span>
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">Eid-ul-Fitr Mega Sale</h2>
+                    <h2 className="text-2xl font-bold mb-2">
+                      Eid-ul-Fitr Mega Sale
+                    </h2>
                     <p className="text-amber-100 mb-4">
                       Get up to 50% off on fusion leather collection + Free Gift
                     </p>
@@ -189,7 +190,8 @@ const Home = () => {
               🔥 Fusion Leather Collection
             </h2>
             <p className="text-amber-600 max-w-2xl mx-auto">
-              Handcrafted with premium leather • Modern fusion designs • Limited edition
+              Handcrafted with premium leather • Modern fusion designs • Limited
+              edition
             </p>
           </div>
 
@@ -238,7 +240,9 @@ const Home = () => {
                         <FaStar key={star} className="text-amber-400 text-xs" />
                       ))}
                     </div>
-                    <span className="text-xs text-amber-500">(128 reviews)</span>
+                    <span className="text-xs text-amber-500">
+                      (128 reviews)
+                    </span>
                   </div>
 
                   <div className="flex justify-between items-center mb-4">
@@ -291,8 +295,12 @@ const Home = () => {
                 <FaStar className="text-2xl text-white" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Eid Special</h3>
-              <p className="text-amber-200 text-sm mb-3">Up to 40% off on fusion collection</p>
-              <div className="text-3xl font-bold text-amber-400 mb-3">40% OFF</div>
+              <p className="text-amber-200 text-sm mb-3">
+                Up to 40% off on fusion collection
+              </p>
+              <div className="text-3xl font-bold text-amber-400 mb-3">
+                40% OFF
+              </div>
               <button className="border border-amber-400 text-amber-400 px-4 py-2 rounded-full text-sm hover:bg-amber-400 hover:text-white transition">
                 Shop Now
               </button>
@@ -303,9 +311,15 @@ const Home = () => {
               <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaGem className="text-2xl text-white" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Durga Puja Special</h3>
-              <p className="text-amber-200 text-sm mb-3">Premium leather gifts collection</p>
-              <div className="text-3xl font-bold text-amber-400 mb-3">35% OFF</div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Durga Puja Special
+              </h3>
+              <p className="text-amber-200 text-sm mb-3">
+                Premium leather gifts collection
+              </p>
+              <div className="text-3xl font-bold text-amber-400 mb-3">
+                35% OFF
+              </div>
               <button className="border border-amber-400 text-amber-400 px-4 py-2 rounded-full text-sm hover:bg-amber-400 hover:text-white transition">
                 Shop Now
               </button>
@@ -316,9 +330,15 @@ const Home = () => {
               <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaGift className="text-2xl text-white" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Christmas Mega Sale</h3>
-              <p className="text-amber-200 text-sm mb-3">Fusion leather + Free gift wrap</p>
-              <div className="text-3xl font-bold text-amber-400 mb-3">50% OFF</div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Christmas Mega Sale
+              </h3>
+              <p className="text-amber-200 text-sm mb-3">
+                Fusion leather + Free gift wrap
+              </p>
+              <div className="text-3xl font-bold text-amber-400 mb-3">
+                50% OFF
+              </div>
               <button className="border border-amber-400 text-amber-400 px-4 py-2 rounded-full text-sm hover:bg-amber-400 hover:text-white transition">
                 Shop Now
               </button>
@@ -373,7 +393,9 @@ const Home = () => {
                       <FaBangladeshiTakaSign size={14} />
                       2,500
                     </div>
-                    <span className="text-xs line-through text-amber-400">3,500</span>
+                    <span className="text-xs line-through text-amber-400">
+                      3,500
+                    </span>
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-2 mt-auto">
@@ -473,7 +495,9 @@ const Home = () => {
                         className="text-amber-400 text-[10px] md:text-xs"
                       />
                     ))}
-                    <span className="text-[10px] text-amber-500 ml-1">(45)</span>
+                    <span className="text-[10px] text-amber-500 ml-1">
+                      (45)
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between mt-auto">
@@ -505,7 +529,8 @@ const Home = () => {
             Join Premium Leather Club
           </h2>
           <p className="text-amber-200 mb-6 max-w-2xl mx-auto">
-            Get exclusive access to limited edition fusion collections & special occasion discounts
+            Get exclusive access to limited edition fusion collections & special
+            occasion discounts
           </p>
           <div className="flex max-w-md mx-auto gap-3">
             <input

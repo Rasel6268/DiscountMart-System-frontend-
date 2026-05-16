@@ -20,7 +20,10 @@ import {
   RefreshCw,
   ChevronUp,
   ChevronDown,
-  MoreHorizontal
+  MoreHorizontal,
+  Star,
+  Crown,
+  Award
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ProductForm from '@/components/product/ProductForm';
@@ -34,6 +37,9 @@ const ProductsPage = () => {
     minPrice: '',
     maxPrice: '',
     isOnSale: '',
+    isPremium: '',      // Added premium filter
+    isBest: '',         // Added best seller filter
+    isFeatured: '',     // Added featured filter
     page: 1,
     limit: 10
   });
@@ -80,6 +86,9 @@ const ProductsPage = () => {
       minPrice: '',
       maxPrice: '',
       isOnSale: '',
+      isPremium: '',
+      isBest: '',
+      isFeatured: '',
       page: 1,
       limit: 10
     });
@@ -149,6 +158,40 @@ const ProductsPage = () => {
     return sortOrder === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
   };
 
+  // Helper function to render product badges
+  const renderProductBadges = (product) => {
+    const badges = [];
+    
+    if (product.isFeatured) {
+      badges.push(
+        <span key="featured" className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
+          <Star size={12} />
+          Featured
+        </span>
+      );
+    }
+    
+    if (product.isPremium) {
+      badges.push(
+        <span key="premium" className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-purple-100 text-purple-800">
+          <Crown size={12} />
+          Premium
+        </span>
+      );
+    }
+    
+    if (product.isBest) {
+      badges.push(
+        <span key="best" className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded bg-red-100 text-red-800">
+          <Award size={12} />
+          Best Seller
+        </span>
+      );
+    }
+    
+    return badges;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -209,7 +252,7 @@ const ProductsPage = () => {
             >
               <Filter size={18} />
               Filters
-              {(filters.category || filters.brand || filters.status || filters.minPrice || filters.isOnSale) && (
+              {(filters.category || filters.brand || filters.status || filters.minPrice || filters.isOnSale || filters.isPremium || filters.isBest || filters.isFeatured) && (
                 <span className="bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {Object.values(filters).filter(v => v && v !== '' && v !== 1).length}
                 </span>
@@ -219,7 +262,7 @@ const ProductsPage = () => {
           
           {showFilters && (
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                 <select
                   value={filters.category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
@@ -262,7 +305,43 @@ const ProductsPage = () => {
                   <option value="">All Products</option>
                   <option value="true">On Sale</option>
                 </select>
+              </div>
+              
+              {/* Product Badges Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <select
+                  value={filters.isFeatured}
+                  onChange={(e) => handleFilterChange('isFeatured', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Products (Featured)</option>
+                  <option value="true">Featured Products Only</option>
+                  <option value="false">Non-Featured Products</option>
+                </select>
                 
+                <select
+                  value={filters.isPremium}
+                  onChange={(e) => handleFilterChange('isPremium', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Products (Premium)</option>
+                  <option value="true">Premium Products Only</option>
+                  <option value="false">Non-Premium Products</option>
+                </select>
+                
+                <select
+                  value={filters.isBest}
+                  onChange={(e) => handleFilterChange('isBest', e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Products (Best Seller)</option>
+                  <option value="true">Best Seller Only</option>
+                  <option value="false">Non-Best Seller</option>
+                </select>
+              </div>
+              
+              {/* Price Range Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -281,7 +360,7 @@ const ProductsPage = () => {
                 </div>
               </div>
               
-              {(filters.category || filters.brand || filters.status || filters.minPrice || filters.maxPrice || filters.isOnSale) && (
+              {(filters.category || filters.brand || filters.status || filters.minPrice || filters.maxPrice || filters.isOnSale || filters.isPremium || filters.isBest || filters.isFeatured) && (
                 <div className="mt-4 flex justify-end">
                   <button
                     onClick={clearFilters}
@@ -354,7 +433,7 @@ const ProductsPage = () => {
                         </button>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
+                        Status & Badges
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         <button onClick={() => handleSort('createdAt')} className="flex items-center gap-1">
@@ -428,14 +507,14 @@ const ProductsPage = () => {
                           )}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusBadge(product.status)}`}>
-                            {product.status}
-                          </span>
-                          {product.isFeatured && (
-                            <span className="ml-2 px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
-                              Featured
+                          <div className="space-y-1">
+                            <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getStatusBadge(product.status)}`}>
+                              {product.status}
                             </span>
-                          )}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {renderProductBadges(product)}
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-sm text-gray-500">
@@ -584,9 +663,14 @@ const ProductsPage = () => {
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Status</label>
-                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getStatusBadge(selectedProduct.status)}`}>
-                    {selectedProduct.status}
-                  </span>
+                  <div className="space-y-1">
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${getStatusBadge(selectedProduct.status)}`}>
+                      {selectedProduct.status}
+                    </span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {renderProductBadges(selectedProduct)}
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Regular Price</label>

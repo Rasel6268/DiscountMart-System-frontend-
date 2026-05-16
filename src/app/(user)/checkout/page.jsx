@@ -13,9 +13,12 @@ import {
   FaCheckCircle,
   FaTimes,
   FaShieldAlt,
+  FaMale,
+  FaFemale,
+  FaVenusMars,
+  FaChild,
 } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
-
 import { GiHandBag } from "react-icons/gi";
 import toast from "react-hot-toast";
 import { useCart } from "@/hooks/useCart";
@@ -26,9 +29,6 @@ const CheckoutPage = () => {
   const router = useRouter();
   const { items, getTotalItems, getTotalPrice, clearCart } = useCart();
   const { user } = useAuth();
-
-  console.log("User data:", user);
-  console.log("Cart items:", items);
 
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -54,7 +54,7 @@ const CheckoutPage = () => {
     shippingArea: "dhaka",
 
     // Payment Method
-    paymentMethod: "ssl", // 'ssl' or 'cod'
+    paymentMethod: "cod",
 
     // Additional Info
     notes: "",
@@ -65,7 +65,13 @@ const CheckoutPage = () => {
   const [errors, setErrors] = useState({});
   const [selectedAddressId, setSelectedAddressId] = useState(null);
 
-  // Shipping methods for Bangladesh
+  // Calculate totals
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shippingCost = formData.shippingArea === "dhaka" ? 60 : 130;
+  const tax = subtotal * 0.05; // 5% VAT
+  const total = subtotal + shippingCost + tax;
+
+  // Shipping methods
   const shippingMethods = {
     dhaka: {
       id: "dhaka",
@@ -85,7 +91,27 @@ const CheckoutPage = () => {
     },
   };
 
-  // Transform cart items from useCart to the format needed for display
+  const getSizeTypeIcon = (type) => {
+    if (!type) return <FaVenusMars className="text-purple-500" />;
+    switch(type) {
+      case 'men': return <FaMale className="text-blue-500" />;
+      case 'women': return <FaFemale className="text-pink-500" />;
+      case 'kids': return <FaChild className="text-green-500" />;
+      default: return <FaVenusMars className="text-purple-500" />;
+    }
+  };
+
+  const getSizeTypeLabel = (type) => {
+    if (!type) return 'Unisex';
+    switch(type) {
+      case 'men': return "Men's";
+      case 'women': return "Women's";
+      case 'kids': return "Kids'";
+      default: return 'Unisex';
+    }
+  };
+
+  // Transform cart items
   const cartItems = items.map((item, index) => ({
     id: item.productId || `item_${index}`,
     productId: item.productId,
@@ -93,89 +119,49 @@ const CheckoutPage = () => {
     price: item.price,
     quantity: item.quantity,
     image: item.image,
+    size: item.size || null,
+    sku: item.sku,
+    originalPrice: item.originalPrice,
   }));
 
-  // Mock saved addresses
+  // Load saved addresses
   useEffect(() => {
-    const mockAddresses = [
-      {
-        _id: "addr_001",
-        name: "Home",
-        addressLine1: "House 12, Road 5",
-        addressLine2: "Banani",
-        city: "Dhaka",
-        area: "Banani",
-        postCode: "1213",
-        country: "Bangladesh",
-        shippingArea: "dhaka",
-        isDefault: true,
-      },
-      {
-        _id: "addr_002",
-        name: "Office",
-        addressLine1: "Plot 22, Sector 3",
-        addressLine2: "Uttara",
-        city: "Dhaka",
-        area: "Uttara",
-        postCode: "1230",
-        country: "Bangladesh",
-        shippingArea: "dhaka",
-        isDefault: false,
-      },
-    ];
-    setSavedAddresses(mockAddresses);
+    const loadSavedAddresses = async () => {
+      if (user?._id) {
+        try {
+          const response = await api.get("/addresses");
+          if (response.data.success) {
+            setSavedAddresses(response.data.data);
+          }
+        } catch (error) {
+          console.error("Failed to load addresses:", error);
+        }
+      }
+    };
+    loadSavedAddresses();
 
-    // Pre-fill user data from useAuth
+    // Pre-fill user data
     if (user) {
       setFormData((prev) => ({
         ...prev,
         name: user.name || "",
         email: user.email || "",
         phone: user.phone || "",
-        addressLine1: user.address?.street || "",
-        city: user.address?.city || "",
-        postCode: user.address?.postalCode || "",
       }));
     }
   }, [user]);
 
-  // Calculate totals using actual cart data
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
-  const shippingCost = formData.shippingArea === "dhaka" ? 60 : 130;
-  const tax = subtotal * 0.05; // 5% VAT
-  const total = subtotal + shippingCost + tax;
-
-  // Determine shipping area based on city/area
   const determineShippingArea = (city, area) => {
     const dhakaAreas = [
-      "dhaka",
-      "dhanmondi",
-      "gulshan",
-      "banani",
-      "uttara",
-      "mirpur",
-      "mohammadpur",
-      "motijheel",
-      "paltan",
-      "ramna",
-      "shahbag",
-      "tejgaon",
-      "badda",
-      "khilgaon",
-      "shyamoli",
-      "farmgate",
+      "dhaka", "dhanmondi", "gulshan", "banani", "uttara", "mirpur",
+      "mohammadpur", "motijheel", "paltan", "ramna", "shahbag", "tejgaon",
+      "badda", "khilgaon", "shyamoli", "farmgate"
     ];
 
     const cityLower = city?.toLowerCase() || "";
     const areaLower = area?.toLowerCase() || "";
 
-    if (
-      cityLower === "dhaka" ||
-      dhakaAreas.some((dhakaArea) => areaLower.includes(dhakaArea))
-    ) {
+    if (cityLower === "dhaka" || dhakaAreas.some(area => areaLower.includes(area))) {
       return "dhaka";
     }
     return "outside_dhaka";
@@ -212,7 +198,7 @@ const CheckoutPage = () => {
       const newFormData = { ...formData, [name]: value };
       handleCityChange(
         name === "city" ? value : formData.city,
-        name === "area" ? value : formData.area,
+        name === "area" ? value : formData.area
       );
       setFormData(newFormData);
     } else {
@@ -232,8 +218,7 @@ const CheckoutPage = () => {
 
     if (!formData.name) newErrors.name = "Full name is required";
     if (!formData.email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = "Email is invalid";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
     if (!formData.phone) newErrors.phone = "Phone number is required";
     if (!formData.addressLine1) newErrors.addressLine1 = "Address is required";
     if (!formData.city) newErrors.city = "City is required";
@@ -260,42 +245,171 @@ const CheckoutPage = () => {
     return true;
   };
 
-  const addNewAddress = (addressData) => {
-    const shippingArea = determineShippingArea(
-      addressData.city,
-      addressData.area,
-    );
-    const newAddress = {
-      _id: `addr_${Date.now()}`,
-      ...addressData,
-      shippingArea,
-      isDefault: savedAddresses.length === 0,
-    };
-    setSavedAddresses([...savedAddresses, newAddress]);
-    setShowAddAddressModal(false);
-    toast.success("Address saved successfully");
-  };
-
-  const deleteAddress = (addressId) => {
-    setSavedAddresses(savedAddresses.filter((addr) => addr._id !== addressId));
-    if (selectedAddressId === addressId) {
-      setSelectedAddressId(null);
-      setFormData((prev) => ({
-        ...prev,
-        addressLine1: "",
-        addressLine2: "",
-        city: "",
-        area: "",
-        postCode: "",
-      }));
-    }
-    toast.success("Address deleted");
-  };
-
-  // Initialize SSL Commerce payment
-  const initiateSSLPayment = async () => {
+  const addNewAddress = async (addressData) => {
     try {
+      const response = await api.post("/addresses", addressData);
+      if (response.data.success) {
+        setSavedAddresses([...savedAddresses, response.data.data]);
+        setShowAddAddressModal(false);
+        toast.success("Address saved successfully");
+      }
+    } catch (error) {
+      console.error("Failed to save address:", error);
+      toast.error("Failed to save address");
+    }
+  };
+
+  const deleteAddress = async (addressId) => {
+    try {
+      await api.delete(`/addresses/${addressId}`);
+      setSavedAddresses(savedAddresses.filter((addr) => addr._id !== addressId));
+      if (selectedAddressId === addressId) {
+        setSelectedAddressId(null);
+        setFormData((prev) => ({
+          ...prev,
+          addressLine1: "",
+          addressLine2: "",
+          city: "",
+          area: "",
+          postCode: "",
+        }));
+      }
+      toast.success("Address deleted");
+    } catch (error) {
+      console.error("Failed to delete address:", error);
+      toast.error("Failed to delete address");
+    }
+  };
+
+  // COMPLETE ORDER DATA FOR COD
+  const handleCODOrder = async () => {
+    setLoading(true);
+    
+    try {
+      // Prepare items with totalPrice
+      const orderItems = items.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image || null,
+        sku: item.size?.sku || item.sku || null,
+        size: item.size ? {
+          name: item.size.name,
+          type: item.size.type || "unisex",
+          extraPrice: item.size.extraPrice || 0,
+          sku: item.size.sku || null,
+        } : null,
+        totalPrice: (item.price + (item.size?.extraPrice || 0)) * item.quantity,
+      }));
+
+      // Complete order data matching Order model
       const orderData = {
+        user: {
+          userId: user?._id || null,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          guestInfo: !user?._id,
+        },
+        shippingAddress: {
+          name: formData.name,
+          addressLine1: formData.addressLine1,
+          addressLine2: formData.addressLine2 || "",
+          city: formData.city,
+          area: formData.area,
+          postCode: formData.postCode,
+          country: formData.country || "Bangladesh",
+        },
+        shippingArea: formData.shippingArea,
+        shippingCost: shippingCost,
+        items: orderItems,
+        subtotal: subtotal,
+        discount: 0,
+        couponDiscount: 0,
+        couponCode: null,
+        tax: tax,
+        total: total,
+        paymentMethod: "cod",
+        notes: formData.notes || "",
+        ipAddress: null,
+        userAgent: typeof window !== 'undefined' ? navigator.userAgent : null,
+      };
+
+      console.log("COD Order Data:", JSON.stringify(orderData, null, 2));
+
+      const response = await api.post("/orders/cod", orderData);
+      
+      if (response.data.success) {
+        toast.success("Order placed successfully!");
+        clearCart();
+        router.push(`/orders/order-confirmation?orderId=${response.data.orderId}`);
+      } else {
+        throw new Error(response.data.message || "Failed to place order");
+      }
+    } catch (error) {
+      console.error("COD Order error:", error);
+      toast.error(error.response?.data?.message || error.message || "Failed to place order. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // COMPLETE ORDER DATA FOR SSL
+  const initiateSSLPayment = async () => {
+    setLoading(true);
+    
+    try {
+      // Prepare items with totalPrice
+      const orderItems = items.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image || null,
+        sku: item.size?.sku || item.sku || null,
+        size: item.size ? {
+          name: item.size.name,
+          type: item.size.type || "unisex",
+          extraPrice: item.size.extraPrice || 0,
+          sku: item.size.sku || null,
+        } : null,
+        totalPrice: (item.price + (item.size?.extraPrice || 0)) * item.quantity,
+      }));
+
+      const orderDataForBackend = {
+        user: {
+          userId: user?._id || null,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          guestInfo: !user?._id,
+        },
+        shippingAddress: {
+          name: formData.name,
+          addressLine1: formData.addressLine1,
+          addressLine2: formData.addressLine2 || "",
+          city: formData.city,
+          area: formData.area,
+          postCode: formData.postCode,
+          country: formData.country || "Bangladesh",
+        },
+        shippingArea: formData.shippingArea,
+        shippingCost: shippingCost,
+        items: orderItems,
+        subtotal: subtotal,
+        discount: 0,
+        couponDiscount: 0,
+        couponCode: null,
+        tax: tax,
+        total: total,
+        paymentMethod: "ssl",
+        notes: formData.notes || "",
+        ipAddress: null,
+        userAgent: typeof window !== 'undefined' ? navigator.userAgent : null,
+      };
+
+      const sslData = {
         total_amount: total,
         currency: "BDT",
         tran_id: `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -310,7 +424,7 @@ const CheckoutPage = () => {
         cus_name: formData.name,
         cus_email: formData.email,
         cus_add1: formData.addressLine1,
-        cus_add2: formData.addressLine2,
+        cus_add2: formData.addressLine2 || "",
         cus_city: formData.city,
         cus_state: formData.area,
         cus_postcode: formData.postCode,
@@ -318,94 +432,31 @@ const CheckoutPage = () => {
         cus_phone: formData.phone,
         ship_name: formData.name,
         ship_add1: formData.addressLine1,
-        ship_add2: formData.addressLine2,
+        ship_add2: formData.addressLine2 || "",
         ship_city: formData.city,
         ship_state: formData.area,
         ship_postcode: formData.postCode,
         ship_country: formData.country,
-        cart_items: items,
       };
 
-      // Call your backend API to initiate SSL payment
-      const response = await fetch("/api/payment/ssl-init", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orderData),
-      });
+      const payload = {
+        orderData: orderDataForBackend,
+        ...sslData
+      };
 
-      const data = await response.json();
+      console.log("SSL Payment Payload:", JSON.stringify(payload, null, 2));
+
+      const response = await api.post("/payment/ssl-init", payload);
+      const data = response.data;
 
       if (data.success && data.redirectUrl) {
-        // Redirect to SSL Commerce payment page
         window.location.href = data.redirectUrl;
       } else {
         throw new Error(data.message || "Payment initiation failed");
       }
     } catch (error) {
       console.error("SSL Payment error:", error);
-      toast.error("Failed to initiate payment. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  // Handle Cash on Delivery
-  const handleCODOrder = async () => {
-    try {
-      const orderData = {
-        user: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          userId: user?._id || null,
-        },
-        shippingAddress: {
-          addressLine1: formData.addressLine1,
-          addressLine2: formData.addressLine2,
-          city: formData.city,
-          area: formData.area,
-          postCode: formData.postCode,
-          country: formData.country,
-        },
-        shippingArea: formData.shippingArea,
-        shippingCost: shippingCost,
-        paymentMethod: "cod",
-        paymentStatus: "pending",
-        orderStatus: "pending",
-        items: items.map((item) => ({
-          productId: item.productId,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.image,
-        })),
-        subtotal: subtotal,
-        tax: tax,
-        total: total,
-        notes: formData.notes,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Call your backend API to save COD order
-      const response = await api.post("/orders/cod", {
-        orderData,
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success("Order placed successfully!");
-        // Clear cart
-        if (clearCart) clearCart();
-        // Redirect to order confirmation
-        router.push(`/order-confirmation?orderId=${data.orderId}`);
-      } else {
-        throw new Error(data.message || "Failed to place order");
-      }
-    } catch (error) {
-      console.error("COD Order error:", error);
-      toast.error("Failed to place order. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to initiate payment. Please try again.");
       setLoading(false);
     }
   };
@@ -413,40 +464,10 @@ const CheckoutPage = () => {
   const placeOrder = async () => {
     if (!validateStep3()) return;
 
-    setLoading(true);
-
     if (formData.paymentMethod === "ssl") {
       await initiateSSLPayment();
     } else {
       await handleCODOrder();
-    }
-
-    setLoading(false);
-  };
-
-  // Save address if requested
-  const saveAddressIfNeeded = async () => {
-    if (formData.saveAddress && formData.addressName && user) {
-      const addressData = {
-        name: formData.addressName,
-        addressLine1: formData.addressLine1,
-        addressLine2: formData.addressLine2,
-        city: formData.city,
-        area: formData.area,
-        postCode: formData.postCode,
-        country: formData.country,
-        shippingArea: formData.shippingArea,
-      };
-
-      try {
-        await fetch("/api/addresses", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(addressData),
-        });
-      } catch (error) {
-        console.error("Failed to save address:", error);
-      }
     }
   };
 
@@ -514,28 +535,17 @@ const CheckoutPage = () => {
                 className="px-3 py-2 border rounded-lg"
                 required
               />
-              <select
-                name="country"
-                className="px-3 py-2 border rounded-lg"
-                required
-              >
+              <select name="country" className="px-3 py-2 border rounded-lg" required>
                 <option value="Bangladesh">Bangladesh</option>
               </select>
             </div>
           </div>
 
           <div className="flex gap-3 mt-6">
-            <button
-              type="submit"
-              className="flex-1 bg-amber-500 text-white py-2 rounded-lg hover:bg-amber-600"
-            >
+            <button type="submit" className="flex-1 bg-amber-500 text-white py-2 rounded-lg hover:bg-amber-600">
               Save Address
             </button>
-            <button
-              type="button"
-              onClick={() => setShowAddAddressModal(false)}
-              className="flex-1 bg-gray-200 py-2 rounded-lg hover:bg-gray-300"
-            >
+            <button type="button" onClick={() => setShowAddAddressModal(false)} className="flex-1 bg-gray-200 py-2 rounded-lg hover:bg-gray-300">
               Cancel
             </button>
           </div>
@@ -559,23 +569,15 @@ const CheckoutPage = () => {
                 <div className="flex flex-col items-center">
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-300 ${
-                      step >= s.step
-                        ? "bg-amber-500 text-white shadow-lg"
-                        : "bg-gray-300 text-gray-500"
+                      step >= s.step ? "bg-amber-500 text-white shadow-lg" : "bg-gray-300 text-gray-500"
                     }`}
                   >
                     {step > s.step ? <FaCheckCircle /> : s.step}
                   </div>
-                  <p className="text-sm mt-2 font-medium hidden md:block">
-                    {s.name}
-                  </p>
+                  <p className="text-sm mt-2 font-medium hidden md:block">{s.name}</p>
                 </div>
                 {s.step < 3 && (
-                  <div
-                    className={`absolute top-5 left-1/2 w-full h-0.5 ${
-                      step > s.step ? "bg-amber-500" : "bg-gray-300"
-                    }`}
-                  />
+                  <div className={`absolute top-5 left-1/2 w-full h-0.5 ${step > s.step ? "bg-amber-500" : "bg-gray-300"}`} />
                 )}
               </div>
             ))}
@@ -589,59 +591,36 @@ const CheckoutPage = () => {
               {/* Step 1: Shipping Information */}
               {step === 1 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    Shipping Information
-                  </h2>
+                  <h2 className="text-2xl font-bold text-gray-800">Shipping Information</h2>
 
-                  {/* User Info Alert */}
                   {user && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-700">
-                        Welcome back, {user.name}! Your information has been
-                        pre-filled.
-                      </p>
+                      <p className="text-sm text-blue-700">Welcome back, {user.name}! Your information has been pre-filled.</p>
                     </div>
                   )}
 
-                  {/* Saved Addresses */}
                   {savedAddresses.length > 0 && (
                     <div className="bg-amber-50 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-800 mb-3">
-                        Saved Addresses
-                      </h3>
+                      <h3 className="font-semibold text-gray-800 mb-3">Saved Addresses</h3>
                       <div className="space-y-2">
                         {savedAddresses.map((address) => (
                           <div
                             key={address._id}
                             className={`flex items-start gap-3 p-3 bg-white rounded-lg cursor-pointer hover:shadow-md transition ${
-                              selectedAddressId === address._id
-                                ? "ring-2 ring-amber-500"
-                                : ""
+                              selectedAddressId === address._id ? "ring-2 ring-amber-500" : ""
                             }`}
                             onClick={() => handleAddressSelect(address)}
                           >
-                            <input
-                              type="radio"
-                              checked={selectedAddressId === address._id}
-                              onChange={() => {}}
-                              className="mt-1 text-amber-500"
-                            />
+                            <input type="radio" checked={selectedAddressId === address._id} onChange={() => {}} className="mt-1 text-amber-500" />
                             <div className="flex-1">
                               <p className="font-medium">{address.name}</p>
                               <p className="text-sm text-gray-600">
-                                {address.addressLine1}, {address.area},{" "}
-                                {address.city} - {address.postCode}
+                                {address.addressLine1}, {address.area}, {address.city} - {address.postCode}
                               </p>
                               <p className="text-xs text-amber-600 mt-1">
-                                {address.shippingArea === "dhaka"
-                                  ? "Inside Dhaka"
-                                  : "Outside Dhaka"}
+                                {address.shippingArea === "dhaka" ? "Inside Dhaka" : "Outside Dhaka"}
                               </p>
-                              {address.isDefault && (
-                                <span className="text-xs text-amber-600 ml-2">
-                                  Default
-                                </span>
-                              )}
+                              {address.isDefault && <span className="text-xs text-amber-600 ml-2">Default</span>}
                             </div>
                             <button
                               onClick={(e) => {
@@ -655,20 +634,14 @@ const CheckoutPage = () => {
                           </div>
                         ))}
                       </div>
-                      <button
-                        onClick={() => setShowAddAddressModal(true)}
-                        className="mt-3 text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1"
-                      >
+                      <button onClick={() => setShowAddAddressModal(true)} className="mt-3 text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1">
                         <FaPlus /> Add New Address
                       </button>
                     </div>
                   )}
 
-                  {/* Personal Information */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                     <input
                       type="text"
                       name="name"
@@ -678,16 +651,12 @@ const CheckoutPage = () => {
                         errors.name ? "border-red-500" : "border-gray-300"
                       }`}
                     />
-                    {errors.name && (
-                      <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                    )}
+                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                       <input
                         type="email"
                         name="email"
@@ -697,17 +666,11 @@ const CheckoutPage = () => {
                           errors.email ? "border-red-500" : "border-gray-300"
                         }`}
                       />
-                      {errors.email && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.email}
-                        </p>
-                      )}
+                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phone *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
                       <input
                         type="tel"
                         name="phone"
@@ -718,15 +681,10 @@ const CheckoutPage = () => {
                           errors.phone ? "border-red-500" : "border-gray-300"
                         }`}
                       />
-                      {errors.phone && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.phone}
-                        </p>
-                      )}
+                      {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                     </div>
                   </div>
 
-                  {/* Shipping Address */}
                   <div>
                     <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                       <FaMapMarkerAlt /> Shipping Address
@@ -734,32 +692,22 @@ const CheckoutPage = () => {
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Address Line 1 *
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
                         <input
                           type="text"
                           name="addressLine1"
                           value={formData.addressLine1}
                           onChange={handleInputChange}
                           className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                            errors.addressLine1
-                              ? "border-red-500"
-                              : "border-gray-300"
+                            errors.addressLine1 ? "border-red-500" : "border-gray-300"
                           }`}
                           placeholder="House/Building number, Street name"
                         />
-                        {errors.addressLine1 && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.addressLine1}
-                          </p>
-                        )}
+                        {errors.addressLine1 && <p className="text-red-500 text-xs mt-1">{errors.addressLine1}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Address Line 2 (Optional)
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2 (Optional)</label>
                         <input
                           type="text"
                           name="addressLine2"
@@ -772,9 +720,7 @@ const CheckoutPage = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            City *
-                          </label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
                           <input
                             type="text"
                             name="city"
@@ -785,17 +731,11 @@ const CheckoutPage = () => {
                             }`}
                             placeholder="e.g., Dhaka, Chittagong"
                           />
-                          {errors.city && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {errors.city}
-                            </p>
-                          )}
+                          {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Area/Thana *
-                          </label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Area/Thana *</label>
                           <input
                             type="text"
                             name="area"
@@ -806,42 +746,28 @@ const CheckoutPage = () => {
                             }`}
                             placeholder="e.g., Gulshan, Banani, Uttara"
                           />
-                          {errors.area && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {errors.area}
-                            </p>
-                          )}
+                          {errors.area && <p className="text-red-500 text-xs mt-1">{errors.area}</p>}
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Post Code *
-                          </label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Post Code *</label>
                           <input
                             type="text"
                             name="postCode"
                             value={formData.postCode}
                             onChange={handleInputChange}
                             className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-amber-500 ${
-                              errors.postCode
-                                ? "border-red-500"
-                                : "border-gray-300"
+                              errors.postCode ? "border-red-500" : "border-gray-300"
                             }`}
                             placeholder="e.g., 1213"
                           />
-                          {errors.postCode && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {errors.postCode}
-                            </p>
-                          )}
+                          {errors.postCode && <p className="text-red-500 text-xs mt-1">{errors.postCode}</p>}
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Country *
-                          </label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
                           <select
                             name="country"
                             value={formData.country}
@@ -855,7 +781,6 @@ const CheckoutPage = () => {
                     </div>
                   </div>
 
-                  {/* Save Address Option */}
                   {user && (
                     <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
                       <input
@@ -866,9 +791,7 @@ const CheckoutPage = () => {
                         className="w-5 h-5 text-amber-500 rounded"
                       />
                       <div className="flex-1">
-                        <label className="font-medium text-gray-700">
-                          Save this address for future purchases
-                        </label>
+                        <label className="font-medium text-gray-700">Save this address for future purchases</label>
                         {formData.saveAddress && (
                           <input
                             type="text"
@@ -887,7 +810,6 @@ const CheckoutPage = () => {
                     <button
                       onClick={() => {
                         if (validateStep1()) {
-                          saveAddressIfNeeded();
                           setStep(2);
                         }
                       }}
@@ -902,21 +824,13 @@ const CheckoutPage = () => {
               {/* Step 2: Shipping Method */}
               {step === 2 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    Select Shipping Area
-                  </h2>
+                  <h2 className="text-2xl font-bold text-gray-800">Select Shipping Area</h2>
 
-                  {/* Shipping Info Badge */}
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <p className="text-sm text-blue-700">
-                      Based on your address:{" "}
-                      <strong>
-                        {formData.city}, {formData.area}
-                      </strong>
+                      Based on your address: <strong>{formData.city}, {formData.area}</strong>
                     </p>
-                    <p className="text-xs text-blue-600 mt-1">
-                      Shipping cost is calculated based on delivery location
-                    </p>
+                    <p className="text-xs text-blue-600 mt-1">Shipping cost is calculated based on delivery location</p>
                   </div>
 
                   <div className="space-y-3">
@@ -924,9 +838,7 @@ const CheckoutPage = () => {
                       <label
                         key={method.id}
                         className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition ${
-                          formData.shippingArea === method.id
-                            ? "border-amber-500 bg-amber-50"
-                            : "border-gray-200 hover:border-amber-300"
+                          formData.shippingArea === method.id ? "border-amber-500 bg-amber-50" : "border-gray-200 hover:border-amber-300"
                         }`}
                       >
                         <div className="flex items-center gap-4">
@@ -941,42 +853,27 @@ const CheckoutPage = () => {
                           <div>
                             <div className="flex items-center gap-2">
                               <method.icon className="text-amber-500" />
-                              <p className="font-semibold text-gray-800">
-                                {method.name}
-                              </p>
+                              <p className="font-semibold text-gray-800">{method.name}</p>
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {method.days}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {method.description}
-                            </p>
+                            <p className="text-sm text-gray-500 mt-1">{method.days}</p>
+                            <p className="text-xs text-gray-400">{method.description}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-amber-600">
-                            ৳{method.price}
-                          </p>
+                          <p className="font-bold text-amber-600">৳{method.price}</p>
                         </div>
                       </label>
                     ))}
                   </div>
 
-                  {/* Delivery Time Note */}
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                     <p className="text-xs text-green-700">
-                      📦 Estimated delivery time:{" "}
-                      {formData.shippingArea === "dhaka"
-                        ? "1-2 business days"
-                        : "3-5 business days"}
+                      📦 Estimated delivery time: {formData.shippingArea === "dhaka" ? "1-2 business days" : "3-5 business days"}
                     </p>
                   </div>
 
                   <div className="flex justify-between gap-4">
-                    <button
-                      onClick={() => setStep(1)}
-                      className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold"
-                    >
+                    <button onClick={() => setStep(1)} className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold">
                       ← Back
                     </button>
                     <button
@@ -996,17 +893,12 @@ const CheckoutPage = () => {
               {/* Step 3: Payment */}
               {step === 3 && (
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    Select Payment Method
-                  </h2>
+                  <h2 className="text-2xl font-bold text-gray-800">Select Payment Method</h2>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* SSL Commerce Option */}
                     <label
                       className={`flex items-start gap-4 p-5 border-2 rounded-xl cursor-pointer transition ${
-                        formData.paymentMethod === "ssl"
-                          ? "border-amber-500 bg-amber-50 shadow-md"
-                          : "border-gray-200 hover:border-amber-300 bg-white"
+                        formData.paymentMethod === "ssl" ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-200 hover:border-amber-300 bg-white"
                       }`}
                     >
                       <input
@@ -1020,46 +912,25 @@ const CheckoutPage = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <FaShieldAlt className="text-2xl text-blue-600" />
-                          <p className="font-bold text-gray-800 text-lg">
-                            SSL Commerce
-                          </p>
+                          <p className="font-bold text-gray-800 text-lg">SSL Commerce</p>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          Pay with Credit/Debit Card, bKash, Nagad, Rocket, or
-                          Mobile Banking
-                        </p>
+                        <p className="text-sm text-gray-600">Pay with Credit/Debit Card, bKash, Nagad, Rocket, or Mobile Banking</p>
                         <div className="flex flex-wrap gap-2 mt-3">
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                            Visa
-                          </span>
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                            Mastercard
-                          </span>
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                            bKash
-                          </span>
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                            Nagad
-                          </span>
-                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                            Amex
-                          </span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">Visa</span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">Mastercard</span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">bKash</span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">Nagad</span>
+                          <span className="text-xs bg-gray-100 px-2 py-1 rounded">Amex</span>
                         </div>
                         <div className="mt-3 p-2 bg-blue-50 rounded">
-                          <p className="text-xs text-blue-700">
-                            🔒 Secure payment gateway. All major payment methods
-                            accepted.
-                          </p>
+                          <p className="text-xs text-blue-700">🔒 Secure payment gateway. All major payment methods accepted.</p>
                         </div>
                       </div>
                     </label>
 
-                    {/* Cash on Delivery Option */}
                     <label
                       className={`flex items-start gap-4 p-5 border-2 rounded-xl cursor-pointer transition ${
-                        formData.paymentMethod === "cod"
-                          ? "border-amber-500 bg-amber-50 shadow-md"
-                          : "border-gray-200 hover:border-amber-300 bg-white"
+                        formData.paymentMethod === "cod" ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-200 hover:border-amber-300 bg-white"
                       }`}
                     >
                       <input
@@ -1073,22 +944,15 @@ const CheckoutPage = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <FaMoneyBillWave className="text-2xl text-green-600" />
-                          <p className="font-bold text-gray-800 text-lg">
-                            Cash on Delivery
-                          </p>
+                          <p className="font-bold text-gray-800 text-lg">Cash on Delivery</p>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          Pay with cash when your order is delivered
-                        </p>
+                        <p className="text-sm text-gray-600">Pay with cash when your order is delivered</p>
                       </div>
                     </label>
                   </div>
 
-                  {/* Order Notes */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Order Notes (Optional)
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Order Notes (Optional)</label>
                     <textarea
                       name="notes"
                       value={formData.notes}
@@ -1100,10 +964,7 @@ const CheckoutPage = () => {
                   </div>
 
                   <div className="flex justify-between gap-4">
-                    <button
-                      onClick={() => setStep(2)}
-                      className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold"
-                    >
+                    <button onClick={() => setStep(2)} className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold">
                       ← Back
                     </button>
                     <button
@@ -1131,35 +992,40 @@ const CheckoutPage = () => {
           {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
-                Order Summary
-              </h2>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
 
-              {/* Cart Items */}
               <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                 {cartItems.map((item, index) => (
-                  <div key={item.id || index} className="flex gap-3">
+                  <div key={`${item.id}_${index}`} className="flex gap-3">
                     {item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-16 h-16 object-cover rounded-lg"
-                      />
+                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
                     ) : (
                       <div className="w-16 h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                         <GiHandBag className="text-3xl text-amber-500" />
                       </div>
                     )}
                     <div className="flex-1">
-                      <p className="font-medium text-gray-800 text-sm line-clamp-2">
-                        {item.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Qty: {item.quantity}
-                      </p>
-                      <p className="text-sm font-semibold text-amber-600">
-                        ৳{(item.price * item.quantity).toFixed(2)}
-                      </p>
+                      <p className="font-medium text-gray-800 text-sm line-clamp-2">{item.name}</p>
+                      
+                      {item.size && (
+                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                          <div className="flex items-center gap-0.5">
+                            {getSizeTypeIcon(item.size.type)}
+                            <span className="text-xs text-gray-500">{getSizeTypeLabel(item.size.type)}</span>
+                          </div>
+                          <span className="text-xs bg-amber-100 px-2 py-0.5 rounded-full text-amber-700 font-medium">
+                            Size: {item.size.name}
+                          </span>
+                          {item.size.extraPrice > 0 && (
+                            <span className="text-xs text-green-600">+${item.size.extraPrice}</span>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                        <p className="text-sm font-semibold text-amber-600">${(item.price * item.quantity).toFixed(2)}</p>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1167,17 +1033,11 @@ const CheckoutPage = () => {
 
               <div className="border-t border-gray-200 pt-4 space-y-2">
                 <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
+                  <span>Subtotal ({items.length} items)</span>
                   <span>৳{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>
-                    Shipping (
-                    {formData.shippingArea === "dhaka"
-                      ? "Inside Dhaka"
-                      : "Outside Dhaka"}
-                    )
-                  </span>
+                  <span>Shipping ({formData.shippingArea === "dhaka" ? "Inside Dhaka" : "Outside Dhaka"})</span>
                   <span>৳{shippingCost.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
@@ -1192,29 +1052,14 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {/* Payment Method Info */}
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg space-y-2">
                 <p className="text-xs text-gray-600 flex items-center gap-1">
                   <FaCreditCard className="text-amber-500" />
-                  Payment:{" "}
-                  {formData.paymentMethod === "ssl"
-                    ? "SSL Commerce"
-                    : "Cash on Delivery"}
+                  Payment: {formData.paymentMethod === "ssl" ? "SSL Commerce" : "Cash on Delivery"}
                 </p>
-                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <p className="text-xs text-gray-500 flex items-center gap-1">
                   <FaTruck />
-                  Shipping to:{" "}
-                  {formData.shippingArea === "dhaka"
-                    ? "Inside Dhaka"
-                    : "Outside Dhaka"}
-                </p>
-              </div>
-
-              {/* Security Badge */}
-              <div className="mt-6 pt-4 border-t border-gray-200 text-center">
-                <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
-                  <FaLock className="text-green-600" />
-                  Secure Checkout
+                  Shipping to: {formData.shippingArea === "dhaka" ? "Inside Dhaka" : "Outside Dhaka"}
                 </p>
               </div>
             </div>
@@ -1222,7 +1067,6 @@ const CheckoutPage = () => {
         </div>
       </div>
 
-      {/* Address Modal */}
       {showAddAddressModal && <AddressModal />}
     </div>
   );

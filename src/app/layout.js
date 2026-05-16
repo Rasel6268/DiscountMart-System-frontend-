@@ -11,8 +11,60 @@ const dmSans = DM_Sans({
 });
 
 export const metadata = {
-  title: "Discount",
-  description: "Authentication with Express and Next.js",
+  title: {
+    default: "Premium Leather Goods | Shoes, Bags & Accessories",
+    template: "%s | Premium Leather Goods"
+  },
+  description: "Discover handcrafted premium leather products including stylish shoes, elegant money bags, wallets, and accessories. Quality craftsmanship with genuine leather.",
+  keywords: ["leather shoes", "leather money bag", "leather wallet", "premium leather", "handcrafted leather", "leather accessories", "genuine leather products"],
+  authors: [{ name: "Discount Leather" }],
+  creator: "Discount Leather",
+  publisher: "Discount Leather",
+  openGraph: {
+    title: "Premium Leather Goods | Shoes, Bags & Accessories",
+    description: "Discover handcrafted premium leather products including stylish shoes, elegant money bags, wallets, and accessories.",
+    type: "website",
+    locale: "en_US",
+    siteName: "Discount Leather",
+    images: [
+      {
+        url: "/og-image.jpg", // Add your OG image path
+        width: 1200,
+        height: 630,
+        alt: "Premium Leather Products Collection"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Premium Leather Goods | Shoes, Bags & Accessories",
+    description: "Discover handcrafted premium leather products including stylish shoes, elegant money bags, wallets, and accessories.",
+    images: ["/og-image.jpg"], // Same OG image path
+    creator: "@discountleather" // Add your Twitter handle
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1
+    }
+  },
+  alternates: {
+    canonical: "https://yourdomain.com", // Replace with your domain
+  },
+  category: "ecommerce",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  verification: {
+    google: "your-google-verification-code", 
+  }
 };
 
 export default function RootLayout({ children }) {
