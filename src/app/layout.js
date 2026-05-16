@@ -54,7 +54,7 @@ export const metadata = {
     }
   },
   alternates: {
-    canonical: "https://yourdomain.com", // Replace with your domain
+    canonical: "http://discountstorebd.com", // Replace with your domain
   },
   category: "ecommerce",
   viewport: {
