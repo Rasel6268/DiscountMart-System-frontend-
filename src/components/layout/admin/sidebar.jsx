@@ -195,7 +195,7 @@ export default function Sidebar({
 
         {/* Sidebar Header */}
         <div
-          className={`sticky top-0 z-10 flex items-center justify-between h-16 px-5 bg-gradient-to-r from-amber-800 to-amber-900 transition-all duration-300 ${!isOpen && "lg:justify-center lg:px-3"}`}
+          className={`sticky top-0 z-10 flex items-center justify-between h-16 px-5 bg-linear-to-r from-amber-800 to-amber-900 transition-all duration-300 ${!isOpen && "lg:justify-center lg:px-3"}`}
         >
           {isOpen ? (
             <div className="flex items-center gap-2">
@@ -230,7 +230,7 @@ export default function Sidebar({
         {isOpen ? (
           <div className="sticky top-16 z-10 p-4 border-b border-gray-700 bg-gray-900">
             <div className="flex items-center gap-3 bg-gray-800/50 rounded-xl p-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+              <div className="w-12 h-12 bg-linear-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center shadow-lg shrink-0">
                 <span className="text-white font-bold text-lg">AD</span>
               </div>
               <div className="flex-1 min-w-0">
@@ -249,7 +249,7 @@ export default function Sidebar({
           </div>
         ) : (
           <div className="sticky top-16 z-10 p-3 border-b border-gray-700 flex justify-center bg-gray-900">
-            <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 bg-linear-to-r from-amber-500 to-amber-600 rounded-full flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-lg">AD</span>
             </div>
           </div>
@@ -291,7 +291,7 @@ export default function Sidebar({
                       ${isOpen ? "px-3 py-2.5 gap-3" : "lg:px-2 lg:py-3 lg:justify-center"}
                       ${
                         isActive || isAnySubItemActive
-                          ? "bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-400"
+                          ? "bg-linear-to-r from-amber-500/20 to-amber-600/10 text-amber-400"
                           : "text-gray-400 hover:bg-gray-800 hover:text-amber-400"
                       }
                     `}

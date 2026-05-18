@@ -457,7 +457,7 @@ const AdminOrderPage = () => {
                                     <div className="space-y-3">
                                         {selectedOrder.statusTimeline.map((timeline, idx) => (
                                             <div key={idx} className="flex gap-4 p-3 bg-gray-50 rounded">
-                                                <div className="w-40 flex-shrink-0">
+                                                <div className="w-40 shrink-0">
                                                     <p className="text-sm font-medium">
                                                         {new Date(timeline.timestamp).toLocaleString()}
                                                     </p>

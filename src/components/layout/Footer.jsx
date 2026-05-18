@@ -55,7 +55,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-gradient-to-br from-gray-900 via-gray-900 to-amber-900 text-white">
+    <footer className="bg-linear-to-br from-gray-900 via-gray-900 to-amber-900 text-white">
       {/* Main Footer */}
       <div className="w-11/12 mx-auto py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
@@ -67,7 +67,7 @@ const Footer = () => {
                 alt="Logo"
                 className="w-10 h-10 object-contain"
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-linear-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
                 AIS DiscountMart
               </span>
             </Link>
@@ -192,7 +192,7 @@ const Footer = () => {
                   placeholder="Your email address"
                   className="px-4 py-2.5 rounded-lg bg-gray-800 border border-gray-700 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-amber-500 transition"
                 />
-                <button className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-4 py-2.5 rounded-lg font-semibold text-sm hover:from-amber-600 hover:to-amber-700 transition-all duration-300">
+                <button className="bg-linear-to-r from-amber-500 to-amber-600 text-white px-4 py-2.5 rounded-lg font-semibold text-sm hover:from-amber-600 hover:to-amber-700 transition-all duration-300">
                   Subscribe
                 </button>
                 <p className="text-gray-500 text-xs mt-2">

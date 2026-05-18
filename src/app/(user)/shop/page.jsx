@@ -62,7 +62,6 @@ const Shop = () => {
     limit: 12,
     pages: 1,
   };
-
   // Transform categories from API
   const categories = (categoriesData?.data || categoriesData || []).map((cat) => ({
     name: cat.name,

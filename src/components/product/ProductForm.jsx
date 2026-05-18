@@ -358,7 +358,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2 items-center gap-1">
                 <Calendar size={14} />
                 Discount Start Date
               </label>
@@ -373,7 +373,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
             </div>
             
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2 items-center gap-1">
                 <Calendar size={14} />
                 Discount End Date
               </label>
