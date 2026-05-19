@@ -6,15 +6,35 @@ import { productApi } from "@/services/productApi";
 
 // ================== QUERIES ==================
 
-// 🔹 Get all products
-export const useProducts = () => {
+// 🔹 Get all products with filters
+export const useProducts = (filters = {}) => {
+  // Remove undefined or empty values from filters
+  const cleanFilters = Object.fromEntries(
+    Object.entries(filters).filter(([_, value]) => 
+      value !== undefined && value !== null && value !== ''
+    )
+  );
+
   return useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", cleanFilters],
     queryFn: async () => {
-      const res = await productApi.getAllProducts();
-      return res.data || [];
-     
+      const res = await productApi.getAllProducts(cleanFilters);
+      // Handle different response structures
+      if (res.data && res.pagination) {
+        return {
+          data: res.data,
+          pagination: res.pagination,
+          success: res.success
+        };
+      }
+      return {
+        data: res.data || [],
+        pagination: res.pagination || { total: 0, page: 1, limit: 12, pages: 1 },
+        success: res.success
+      };
     },
+    keepPreviousData: true, // Keep previous data while fetching new data
+    staleTime: 5000, // Consider data fresh for 5 seconds
   });
 };
 

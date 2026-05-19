@@ -1,7 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import {
   FaStar,
   FaRegHeart,
@@ -26,42 +24,61 @@ const Shop = () => {
     categories: [],
     brands: [],
     priceRanges: [],
-    ratings: [],
   });
   const [sortBy, setSortBy] = useState("featured");
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Build filter params for API
+  const getFilterParams = () => {
+    const params = {};
+    
+    if (searchTerm) params.search = searchTerm;
+    if (sortBy) params.sortBy = sortBy;
+    if (currentPage) params.page = currentPage;
+    
+    // Categories - send as comma-separated string
+    if (selectedFilters.categories.length > 0) {
+      params.category = selectedFilters.categories.join(',');
+    }
+    
+    // Brands - send as comma-separated string
+    if (selectedFilters.brands.length > 0) {
+      params.brand = selectedFilters.brands.join(',');
+    }
+    
+    // Price range
+    if (selectedFilters.priceRanges.length > 0) {
+      const priceRange = selectedFilters.priceRanges[0];
+      if (priceRange.min !== undefined) params.minPrice = priceRange.min;
+      if (priceRange.max !== undefined) params.maxPrice = priceRange.max;
+    }
+    
+    return params;
+  };
+
   // Fetch data from API
-  const {
-    data: productsData,
-    isLoading: productsLoading,
+  const { 
+    data: productsResponse, 
+    isLoading: productsLoading, 
     error: productsError,
-    refetch,
-  } = useProducts({
-    search: searchTerm,
-    category: selectedFilters.categories.join(","),
-    brand: selectedFilters.brands.join(","),
-    minPrice: selectedFilters.priceRanges[0]?.min,
-    maxPrice: selectedFilters.priceRanges[0]?.max,
-    sortBy: sortBy,
-    page: currentPage,
-    limit: 12,
-  });
+    refetch 
+  } = useProducts(getFilterParams());
 
   const { data: categoriesData = [] } = useCategories();
   const { data: brandsData = [] } = useBrands();
   const { addToCart, isInCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
-  // Handle API response structure
-  const products = productsData?.data || productsData || [];
-  const pagination = productsData?.pagination || {
+  // Extract products and pagination from response
+  const products = productsResponse?.data || [];
+  const pagination = productsResponse?.pagination || {
     total: 0,
     page: 1,
     limit: 12,
     pages: 1,
   };
+  
   // Transform categories from API
   const categories = (categoriesData?.data || categoriesData || []).map((cat) => ({
     name: cat.name,
@@ -77,10 +94,10 @@ const Shop = () => {
   }));
 
   const priceRanges = [
-    { id: 1, range: "$0 - $50", min: 0, max: 50, count: 0 },
-    { id: 2, range: "$50 - $100", min: 50, max: 100, count: 0 },
-    { id: 3, range: "$100 - $200", min: 100, max: 200, count: 0 },
-    { id: 4, range: "$200+", min: 200, max: 100000, count: 0 },
+    { id: 1, range: "৳0 - ৳500", min: 0, max: 500 },
+    { id: 2, range: "৳500 - ৳1000", min: 500, max: 1000 },
+    { id: 3, range: "৳1000 - ৳2000", min: 1000, max: 2000 },
+    { id: 4, range: "৳2000+", min: 2000, max: 100000 },
   ];
 
   const handleFilterChange = (type, value) => {
@@ -89,19 +106,20 @@ const Shop = () => {
       const updated = current.includes(value)
         ? current.filter((v) => v !== value)
         : [...current, value];
-
+      
+      console.log(`Filter changed - ${type}:`, updated);
       return { ...prev, [type]: updated };
     });
     setCurrentPage(1);
   };
 
   const handlePriceRangeChange = (range) => {
-    setSelectedFilters((prev) => ({
-      ...prev,
-      priceRanges: prev.priceRanges.some((r) => r.id === range.id)
-        ? []
-        : [range],
-    }));
+    setSelectedFilters((prev) => {
+      const isSelected = prev.priceRanges.some((r) => r.id === range.id);
+      const updated = isSelected ? [] : [range];
+      console.log("Price range changed:", updated);
+      return { ...prev, priceRanges: updated };
+    });
     setCurrentPage(1);
   };
 
@@ -110,7 +128,6 @@ const Shop = () => {
       categories: [],
       brands: [],
       priceRanges: [],
-      ratings: [],
     });
     setSearchTerm("");
     setSortBy("featured");
@@ -121,16 +138,13 @@ const Shop = () => {
     return (
       selectedFilters.categories.length +
       selectedFilters.brands.length +
-      selectedFilters.priceRanges.length +
-      selectedFilters.ratings.length
+      selectedFilters.priceRanges.length
     );
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(price);
+  const formatPriceBDT = (price) => {
+    if (!price) return "৳0";
+    return `৳${Math.round(price).toLocaleString("en-US")}`;
   };
 
   const handleAddToCart = async (product) => {
@@ -142,7 +156,6 @@ const Shop = () => {
         quantity: 1,
         image: product.images?.[0]?.url,
       });
-    
       
       if (result.success) {
         toast.success(`${product.name} added to cart!`);
@@ -180,7 +193,7 @@ const Shop = () => {
     return [...Array(5)].map((_, i) => (
       <FaStar
         key={i}
-        className={`text-xs md:text-xs ${i < Math.floor(numRating) ? "text-amber-400" : "text-gray-300"}`}
+        className={`text-xs ${i < Math.floor(numRating) ? "text-amber-400" : "text-gray-300"}`}
       />
     ));
   };
@@ -189,8 +202,13 @@ const Shop = () => {
     router.push(`/shop/${productId}`);
   };
 
+  // Debug: Log current filters when they change
+  useEffect(() => {
+    console.log("Current filter params:", getFilterParams());
+  }, [selectedFilters, sortBy, searchTerm, currentPage]);
+
   return (
-    <div className="min-h-screen bg-linear-to-br from-amber-50 via-white to-amber-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50">
       {/* Search & Filter Bar */}
       <div className="sticky top-0 z-40 bg-white shadow-lg border-b border-amber-100">
         <div className="w-11/12 mx-auto px-4 py-4">
@@ -297,9 +315,7 @@ const Shop = () => {
                           <div className="flex items-center gap-3">
                             <input
                               type="checkbox"
-                              checked={selectedFilters.categories.includes(
-                                category.id,
-                              )}
+                              checked={selectedFilters.categories.includes(category.id)}
                               onChange={() =>
                                 handleFilterChange("categories", category.id)
                               }
@@ -404,6 +420,14 @@ const Shop = () => {
                   Showing {products?.length || 0} of {pagination.total || 0} products
                 </p>
               </div>
+              {getActiveFiltersCount() > 0 && (
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
 
             {/* Loading State */}
@@ -449,7 +473,7 @@ const Shop = () => {
                       >
                         {/* Image Container */}
                         <div 
-                          className="relative overflow-hidden bg-linear-to-br from-amber-50 to-amber-100"
+                          className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100"
                           onClick={() => handleProductClick(product._id)}
                         >
                           <div className="aspect-square w-full">
@@ -535,13 +559,13 @@ const Shop = () => {
                           <div className="flex items-center justify-between mb-3">
                             <div>
                               <span className="text-base md:text-lg font-bold text-amber-600">
-                                {formatPrice(
+                                {formatPriceBDT(
                                   product.discountPrice || product.regularPrice,
                                 )}
                               </span>
-                              {product.discountPrice && (
+                              {product.discountPrice && product.discountPrice > 0 && (
                                 <span className="block text-[10px] text-gray-400 line-through">
-                                  {formatPrice(product.regularPrice)}
+                                  {formatPriceBDT(product.regularPrice)}
                                 </span>
                               )}
                             </div>
@@ -565,7 +589,7 @@ const Shop = () => {
                             disabled={product.quantity === 0}
                             className={`w-full py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${
                               product.quantity > 0
-                                ? "bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-md"
+                                ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-md"
                                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
                             }`}
                           >

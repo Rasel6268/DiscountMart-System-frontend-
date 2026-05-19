@@ -7,11 +7,10 @@ export const productApi = {
     return response.data;
   },
 
-  // Get all products
+  // Get all products with filters
   async getAllProducts(params = {}) {
     const response = await api.get('/products', { params });
     return response.data;
-   
   },
 
   // Get product by ID
