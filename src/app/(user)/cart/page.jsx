@@ -17,6 +17,7 @@ import {
   FaFemale,
   FaVenusMars,
   FaChild,
+  FaPalette,
 } from "react-icons/fa";
 import { GiHandBag } from "react-icons/gi";
 import { useCart } from "@/hooks/useCart";
@@ -40,6 +41,7 @@ const CartPage = () => {
     getCartSummary,
     getItemDisplayName,
   } = useCart();
+  console.log(items)
 
   const [cartItems, setCartItems] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
@@ -89,42 +91,41 @@ const CartPage = () => {
   }, [subtotal, shippingCost, discount]);
 
   // Handle quantity update
-  const handleQuantityUpdate = (productId, newQuantity, size = null) => {
+  const handleQuantityUpdate = (productId, newQuantity, size = null, color = null) => {
     if (newQuantity < 1) {
       toast.error("Quantity cannot be less than 1");
       return;
     }
-    updateQuantity(productId, newQuantity, size);
+    updateQuantity(productId, newQuantity, size, color);
     toast.success("Cart updated");
   };
 
   // Handle remove item
-  const handleRemoveItem = (productId, size, productName) => {
-    removeFromCart(productId, size);
-    const sizeText = size ? ` (Size: ${size.name})` : '';
-    toast.success(`${productName}${sizeText} removed from cart`);
+  const handleRemoveItem = (productId, size, color, productName) => {
+    removeFromCart(productId, size, color);
+    let variantText = '';
+    if (size) variantText += ` (Size: ${size.name})`;
+    if (color) variantText += ` (Color: ${color.name})`;
+    toast.success(`${productName}${variantText} removed from cart`);
   };
 
   // Handle save for later
   const handleSaveForLater = (item) => {
-    removeFromCart(item.productId, item.size);
+    removeFromCart(item.productId, item.size, item.color);
     setSavedForLater([...savedForLater, item]);
-    const sizeText = item.size ? ` (Size: ${item.size.name})` : '';
-    toast.success(`${item.name}${sizeText} saved for later`);
+    let variantText = '';
+    if (item.size) variantText += ` (Size: ${item.size.name})`;
+    if (item.color) variantText += ` (Color: ${item.color.name})`;
+    toast.success(`${item.name}${variantText} saved for later`);
   };
 
   // Handle move to cart from saved
   const handleMoveToCart = (item) => {
     setSavedForLater(savedForLater.filter(i => 
       i.productId !== item.productId || 
-      (i.size?.name !== item.size?.name)
+      (i.size?.name !== item.size?.name) ||
+      (i.color?.name !== item.color?.name)
     ));
-    // Add back to cart with same size
-    const cartItem = {
-      ...item,
-      quantity: item.quantity,
-    };
-    // This would need to call addToCart with the saved item
     toast.success(`${item.name} moved to cart`);
   };
 
@@ -147,7 +148,7 @@ const CartPage = () => {
       
       if (data.success) {
         setDiscount(data.discount);
-        toast.success(`Coupon applied! You saved $${data.discount}`);
+        toast.success(`Coupon applied! You saved ৳${data.discount}`);
       } else {
         toast.error(data.message || "Invalid coupon code");
       }
@@ -166,7 +167,6 @@ const CartPage = () => {
     setIsProcessing(true);
     
     try {
-      // Simulate checkout process
       await new Promise(resolve => setTimeout(resolve, 1500));
       router.push("/checkout");
     } catch (error) {
@@ -176,12 +176,10 @@ const CartPage = () => {
     }
   };
 
-  // Format price
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(price);
+  // Format price in BDT (Taka)
+  const formatPriceBDT = (price) => {
+    if (!price) return "৳0";
+    return `৳${Math.round(price).toLocaleString("en-US")}`;
   };
 
   // Empty cart component
@@ -248,12 +246,12 @@ const CartPage = () => {
                         <th className="px-4 py-4 text-sm font-semibold text-gray-700">
                           Actions
                         </th>
-                      </tr>
+                       </tr>
                     </thead>
                     <tbody>
                       {cartItems.map((item) => (
                         <tr
-                          key={`${item.productId}_${item.size?.name || 'nosize'}`}
+                          key={`${item.productId}_${item.size?.name || 'nosize'}_${item.color?.name || 'nocolor'}`}
                           className="border-b border-gray-100 hover:bg-amber-50/30 transition-colors"
                         >
                           {/* Product Info */}
@@ -294,7 +292,7 @@ const CartPage = () => {
                                     </span>
                                     {item.size.extraPrice > 0 && (
                                       <span className="text-xs text-green-600">
-                                        +{formatPrice(item.size.extraPrice)}
+                                        +{formatPriceBDT(item.size.extraPrice)}
                                       </span>
                                     )}
                                     {item.size.sku && (
@@ -305,10 +303,32 @@ const CartPage = () => {
                                   </div>
                                 )}
                                 
+                                {/* Color Information */}
+                                {item.color && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <FaPalette className="text-xs text-pink-500" />
+                                    <span className="text-xs bg-pink-100 px-2 py-0.5 rounded-full text-pink-700 font-medium">
+                                      Color: {item.color.name}
+                                    </span>
+                                    {item.color.hexCode && (
+                                      <div 
+                                        className="w-4 h-4 rounded-full border border-gray-300"
+                                        style={{ backgroundColor: item.color.hexCode }}
+                                        title={item.color.name}
+                                      />
+                                    )}
+                                    {item.color.extraPrice > 0 && (
+                                      <span className="text-xs text-green-600">
+                                        +{formatPriceBDT(item.color.extraPrice)}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                
                                 {/* Original price if discounted */}
                                 {item.originalPrice && item.originalPrice > item.price && (
                                   <p className="text-xs text-gray-400 line-through mt-1">
-                                    {formatPrice(item.originalPrice)}
+                                    {formatPriceBDT(item.originalPrice)}
                                   </p>
                                 )}
                               </div>
@@ -319,11 +339,11 @@ const CartPage = () => {
                           <td className="px-4 py-4">
                             <div>
                               <span className="text-gray-700 font-medium">
-                                {formatPrice(item.price)}
+                                {formatPriceBDT(item.price)}
                               </span>
-                              {item.size?.extraPrice > 0 && (
+                              {(item.size?.extraPrice > 0 || item.color?.extraPrice > 0) && (
                                 <p className="text-xs text-gray-400">
-                                  Base: {formatPrice(item.price - item.size.extraPrice)}
+                                  Base: {formatPriceBDT(item.price - (item.size?.extraPrice || 0) - (item.color?.extraPrice || 0))}
                                 </p>
                               )}
                             </div>
@@ -337,7 +357,8 @@ const CartPage = () => {
                                   handleQuantityUpdate(
                                     item.productId,
                                     item.quantity - 1,
-                                    item.size
+                                    item.size,
+                                    item.color
                                   )
                                 }
                                 className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition"
@@ -352,7 +373,8 @@ const CartPage = () => {
                                   handleQuantityUpdate(
                                     item.productId,
                                     item.quantity + 1,
-                                    item.size
+                                    item.size,
+                                    item.color
                                   )
                                 }
                                 className="w-8 h-8 rounded-lg border border-amber-200 flex items-center justify-center hover:bg-amber-50 transition"
@@ -369,7 +391,7 @@ const CartPage = () => {
                           {/* Total */}
                           <td className="px-4 py-4">
                             <span className="font-bold text-amber-600">
-                              {formatPrice(item.price * item.quantity)}
+                              {formatPriceBDT(item.price * item.quantity)}
                             </span>
                           </td>
 
@@ -397,7 +419,7 @@ const CartPage = () => {
                               </button>
                               <button
                                 onClick={() =>
-                                  handleRemoveItem(item.productId, item.size, item.name)
+                                  handleRemoveItem(item.productId, item.size, item.color, item.name)
                                 }
                                 className="p-2 text-red-500 hover:text-red-700 transition"
                                 title="Remove"
@@ -446,7 +468,7 @@ const CartPage = () => {
                   <div className="divide-y divide-gray-100">
                     {savedForLater.map((item, idx) => (
                       <div
-                        key={`saved_${item.productId}_${item.size?.name || 'nosize'}_${idx}`}
+                        key={`saved_${item.productId}_${item.size?.name || 'nosize'}_${item.color?.name || 'nocolor'}_${idx}`}
                         className="p-4 flex items-center justify-between hover:bg-amber-50/30 transition-colors"
                       >
                         <div className="flex items-center gap-3">
@@ -473,8 +495,19 @@ const CartPage = () => {
                                 {item.size.type && ` (${item.size.type})`}
                               </p>
                             )}
+                            {item.color && (
+                              <p className="text-xs text-gray-500 flex items-center gap-1">
+                                Color: {item.color.name}
+                                {item.color.hexCode && (
+                                  <span 
+                                    className="w-3 h-3 rounded-full inline-block"
+                                    style={{ backgroundColor: item.color.hexCode }}
+                                  />
+                                )}
+                              </p>
+                            )}
                             <p className="text-sm text-amber-600">
-                              {formatPrice(item.price)}
+                              {formatPriceBDT(item.price)}
                             </p>
                           </div>
                         </div>
@@ -504,7 +537,7 @@ const CartPage = () => {
                   {/* Subtotal */}
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal ({getTotalItems()} items)</span>
-                    <span className="font-medium">{formatPrice(subtotal)}</span>
+                    <span className="font-medium">{formatPriceBDT(subtotal)}</span>
                   </div>
 
                   {/* Coupon Code */}
@@ -529,7 +562,7 @@ const CartPage = () => {
                     </div>
                     {discount > 0 && (
                       <p className="text-green-600 text-sm mt-2">
-                        Coupon applied! You saved {formatPrice(discount)}
+                        Coupon applied! You saved {formatPriceBDT(discount)}
                       </p>
                     )}
                   </div>
@@ -538,14 +571,14 @@ const CartPage = () => {
                   {discount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Discount</span>
-                      <span>-{formatPrice(discount)}</span>
+                      <span>-{formatPriceBDT(discount)}</span>
                     </div>
                   )}
 
                   <div className="border-t border-amber-100 pt-4">
                     <div className="flex justify-between text-lg font-bold text-gray-800">
                       <span>Total</span>
-                      <span className="text-amber-600">{formatPrice(total)}</span>
+                      <span className="text-amber-600">{formatPriceBDT(total)}</span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
                       *Taxes calculated at checkout
@@ -582,6 +615,9 @@ const CartPage = () => {
                       <FaCcPaypal className="text-3xl text-gray-400" />
                       <FaCcAmex className="text-3xl text-gray-400" />
                     </div>
+                    <p className="text-center text-xs text-gray-400 mt-2">
+                      bKash | Nagad | Rocket also accepted
+                    </p>
                   </div>
                 </div>
               </div>
@@ -596,13 +632,13 @@ const CartPage = () => {
                     {
                       id: 1,
                       name: "Premium Leather Bag",
-                      price: 89.99,
+                      price: 8999,
                       image: null,
                     },
                     {
                       id: 2,
                       name: "Designer Sunglasses",
-                      price: 129.99,
+                      price: 12999,
                       image: null,
                     },
                   ].map((product) => (
@@ -619,7 +655,7 @@ const CartPage = () => {
                           {product.name}
                         </p>
                         <p className="text-sm text-amber-600">
-                          {formatPrice(product.price)}
+                          {formatPriceBDT(product.price)}
                         </p>
                       </div>
                       <button

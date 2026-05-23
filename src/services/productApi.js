@@ -41,5 +41,57 @@ export const productApi = {
   async updateStock(id, quantity, operation = 'set') {
     const response = await api.patch(`/products/${id}/stock`, { quantity, operation });
     return response.data;
+  },
+
+  // ================== COLOR MANAGEMENT ==================
+  
+  // Add color to product
+  async addColorToProduct(productId, colorData) {
+    const response = await api.post(`/products/${productId}/colors`, colorData);
+    return response.data;
+  },
+
+  // Update color quantity
+  async updateColorQuantity(productId, colorId, quantity) {
+    const response = await api.patch(`/products/${productId}/colors/${colorId}`, { quantity });
+    return response.data;
+  },
+
+  // Remove color from product
+  async removeColorFromProduct(productId, colorId) {
+    const response = await api.delete(`/products/${productId}/colors/${colorId}`);
+    return response.data;
+  },
+
+  // Get product colors
+  async getProductColors(productId) {
+    const response = await api.get(`/products/${productId}/colors`);
+    return response.data;
+  },
+
+  // ================== SIZE MANAGEMENT ==================
+  
+  // Add size to product
+  async addSizeToProduct(productId, sizeData) {
+    const response = await api.post(`/products/${productId}/sizes`, sizeData);
+    return response.data;
+  },
+
+  // Update size quantity
+  async updateSizeQuantity(productId, sizeName, quantity) {
+    const response = await api.patch(`/products/${productId}/sizes/${sizeName}`, { quantity });
+    return response.data;
+  },
+
+  // Remove size from product
+  async removeSizeFromProduct(productId, sizeName) {
+    const response = await api.delete(`/products/${productId}/sizes/${sizeName}`);
+    return response.data;
+  },
+
+  // Get product sizes
+  async getProductSizes(productId) {
+    const response = await api.get(`/products/${productId}/sizes`);
+    return response.data;
   }
 };

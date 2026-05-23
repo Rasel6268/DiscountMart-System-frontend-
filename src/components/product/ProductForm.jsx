@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useCreateProduct, useUpdateProduct } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { useBrands } from '@/hooks/useBrands';
-import { X, Plus, Loader2, Package, DollarSign, Box, Image, Truck, Calendar, Ruler, Shirt, Star, Crown, Award } from 'lucide-react';
+import { X, Plus, Loader2, Package, DollarSign, Box, Image, Truck, Calendar, Ruler, Shirt, Star, Crown, Award, Palette } from 'lucide-react';
 import ProductSizeManager from '../ProductSizeManager';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/config/api';
 
 const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -35,6 +37,10 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     hasSizes: false,
     sizes: [],
     
+    // Color Management
+    hasColors: false,
+    colors: [],
+    
     // Images
     images: [],
     
@@ -42,8 +48,8 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     status: 'draft',
     isActive: true,
     isFeatured: false,
-    isPremium: false,     // Added
-    isBest: false,        // Added
+    isPremium: false,
+    isBest: false,
     isPublished: false,
     isFreeShipping: false,
     
@@ -55,12 +61,30 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
   const [imageInput, setImageInput] = useState({ url: '', alt: '' });
   const [showVariants, setShowVariants] = useState(false);
   const [sizeEnabled, setSizeEnabled] = useState(false);
+  const [colorEnabled, setColorEnabled] = useState(false);
   
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const { data: categories = [] } = useCategories();
   const { data: brands = [] } = useBrands();
-  
+
+  // Fetch colors from API
+  const { data: colorsData = [] } = useQuery({
+    queryKey: ['colors'],
+    queryFn: async () => {
+      const res = await api.get('/colors/all');
+      return res.data?.data || res.data || [];
+    }
+  });
+
+  // Transform colors data
+  const availableColors = colorsData.map(color => ({
+    _id: color._id,
+    name: color.name,
+    hexCode: color.hexCode || '#000000',
+    isActive: color.isActive
+  }));
+
   // Get subcategories based on selected category
   const selectedCategory = categories.find(c => c._id === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
@@ -86,17 +110,20 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
         allowBackorder: editingProduct.allowBackorder || false,
         hasSizes: editingProduct.hasSizes || false,
         sizes: editingProduct.sizes || [],
+        hasColors: editingProduct.hasColors || false,
+        colors: editingProduct.colors || [],
         images: editingProduct.images || [],
         status: editingProduct.status || 'draft',
         isActive: editingProduct.isActive !== false,
         isFeatured: editingProduct.isFeatured || false,
-        isPremium: editingProduct.isPremium || false,   // Added
-        isBest: editingProduct.isBest || false,          // Added
+        isPremium: editingProduct.isPremium || false,
+        isBest: editingProduct.isBest || false,
         isPublished: editingProduct.isPublished || false,
         isFreeShipping: editingProduct.isFreeShipping || false,
         variants: editingProduct.variants || [],
       });
       setSizeEnabled(editingProduct.hasSizes || false);
+      setColorEnabled(editingProduct.hasColors || false);
     }
   }, [editingProduct]);
 
@@ -112,7 +139,6 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
   };
 
   const handleSizesChange = (sizes) => {
-    // Calculate total quantity from all sizes
     const totalQuantity = sizes.reduce((sum, size) => sum + (size.quantity || 0), 0);
     
     setFormData(prev => ({
@@ -127,7 +153,6 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     setSizeEnabled(enabled);
     
     if (!enabled) {
-      // Clear sizes when disabling size management
       setFormData(prev => ({
         ...prev,
         sizes: [],
@@ -139,6 +164,41 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
         hasSizes: true,
       }));
     }
+  };
+
+  // Color Management Functions - Only track which colors are selected, no quantity
+  const handleColorToggle = (enabled) => {
+    setColorEnabled(enabled);
+    
+    if (!enabled) {
+      setFormData(prev => ({
+        ...prev,
+        colors: [],
+        hasColors: false,
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        hasColors: true,
+      }));
+    }
+  };
+
+  const handleAddColor = (color) => {
+    // Check if color already exists
+    if (!formData.colors.some(c => c._id === color._id)) {
+      setFormData(prev => ({
+        ...prev,
+        colors: [...prev.colors, { ...color }] // No quantity field
+      }));
+    }
+  };
+
+  const handleRemoveColor = (colorId) => {
+    setFormData(prev => ({
+      ...prev,
+      colors: prev.colors.filter(c => c._id !== colorId)
+    }));
   };
 
   const handleAddImage = () => {
@@ -181,12 +241,10 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     if (!formData.category) newErrors.category = 'Category is required';
     if (!formData.brand) newErrors.brand = 'Brand is required';
     
-    // Validate sizes if enabled
     if (sizeEnabled && formData.sizes.length === 0) {
       newErrors.sizes = 'At least one size is required when size management is enabled';
     }
     
-    // Check for duplicate size names
     if (sizeEnabled && formData.sizes.length > 0) {
       const sizeNames = formData.sizes.map(s => s.name.toLowerCase());
       const hasDuplicates = sizeNames.some((name, index) => sizeNames.indexOf(name) !== index);
@@ -212,16 +270,22 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
     
     if (!validateForm()) return;
     
+    // Calculate total quantity from sizes if size management is enabled
+    const totalSizeQuantity = sizeEnabled ? formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0) : 0;
+    
     const submitData = {
       ...formData,
       regularPrice: parseFloat(formData.regularPrice),
       discountPrice: formData.discountPrice ? parseFloat(formData.discountPrice) : null,
       costPerItem: formData.costPerItem ? parseFloat(formData.costPerItem) : null,
-      quantity: sizeEnabled ? formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0) : (parseInt(formData.quantity) || 0),
+      quantity: sizeEnabled ? totalSizeQuantity : (parseInt(formData.quantity) || 0),
       lowStockThreshold: parseInt(formData.lowStockThreshold) || 10,
       hasSizes: sizeEnabled && formData.sizes.length > 0,
       sizes: sizeEnabled ? formData.sizes : [],
+      hasColors: colorEnabled && formData.colors.length > 0,
+      colors: colorEnabled ? formData.colors : [], // Colors without quantity
     };
+    console.log('Submitting product data:', submitData);
     
     try {
       if (editingProduct) {
@@ -242,7 +306,7 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
 
   const isLoading = createProduct.isLoading || updateProduct.isLoading;
   
-  // Calculate total quantity from sizes for display
+  // Calculate total from sizes
   const totalSizeQuantity = formData.sizes.reduce((sum, size) => sum + (size.quantity || 0), 0);
 
   return (
@@ -470,6 +534,121 @@ const ProductForm = ({ onSuccess, editingProduct, setEditingProduct, onCancel })
               {errors.brand && <p className="text-red-500 text-xs mt-1">{errors.brand}</p>}
             </div>
           </div>
+        </div>
+        
+        {/* ================= COLOR MANAGEMENT ================= */}
+        <div className="border-b pb-4">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700 flex items-center gap-2">
+            <Palette size={18} className="text-pink-600" />
+            Color Management
+          </h3>
+          
+          <div className="mb-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={colorEnabled}
+                onChange={(e) => handleColorToggle(e.target.checked)}
+                className="w-4 h-4 text-pink-600 rounded focus:ring-pink-500"
+                disabled={isLoading}
+              />
+              <span className="text-sm font-medium text-gray-700">
+                Enable color-based inventory management
+              </span>
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              Enable this if your product comes in different colors (e.g., Red, Blue, Black)
+            </p>
+          </div>
+          
+          {colorEnabled && (
+            <div className="mt-4">
+              {/* Available Colors - No quantity needed */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Available Colors
+                </label>
+                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                  {availableColors.filter(color => color.isActive !== false).map((color) => {
+                    const isSelected = formData.colors.some(c => c._id === color._id);
+                    return (
+                      <button
+                        key={color._id}
+                        type="button"
+                        onClick={() => isSelected ? handleRemoveColor(color._id) : handleAddColor(color)}
+                        className={`flex flex-col items-center gap-1 p-2 rounded-lg border transition-all ${
+                          isSelected 
+                            ? 'border-pink-500 bg-pink-50' 
+                            : 'border-gray-200 hover:border-pink-300'
+                        }`}
+                      >
+                        <div 
+                          className="w-8 h-8 rounded-full shadow-sm"
+                          style={{ backgroundColor: color.hexCode }}
+                        />
+                        <span className="text-xs text-gray-600">{color.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Selected Colors List - Just display, no quantity input */}
+              {formData.colors.length > 0 && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selected Colors
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.colors.map((color) => (
+                      <div
+                        key={color._id}
+                        className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+                      >
+                        <div 
+                          className="w-6 h-6 rounded-full shadow-sm"
+                          style={{ backgroundColor: color.hexCode }}
+                        />
+                        <span className="text-sm text-gray-800">{color.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveColor(color._id)}
+                          className="text-red-500 hover:text-red-700 ml-1"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Color Summary */}
+                  <div className="mt-3 p-3 bg-pink-50 rounded-lg border border-pink-200">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium text-pink-800">Color Selection Summary</p>
+                        <p className="text-xs text-pink-600 mt-1">
+                          Selected {formData.colors.length} color{formData.colors.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <Palette size={20} className="text-pink-500" />
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {formData.colors.map(color => (
+                        <span key={color._id} className="text-xs bg-white px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+                          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color.hexCode }} />
+                          {color.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {errors.colors && (
+                <p className="text-red-500 text-xs mt-2">{errors.colors}</p>
+              )}
+            </div>
+          )}
         </div>
         
         {/* ================= SIZE MANAGEMENT ================= */}

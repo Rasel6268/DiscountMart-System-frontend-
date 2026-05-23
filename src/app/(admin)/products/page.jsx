@@ -60,7 +60,7 @@ const ProductsPage = () => {
   const { data: brands = [] } = useBrands();
   const deleteProduct = useDeleteProduct();
   
-  const products = data || [];
+  const products = data?.data || [];
 
   const pagination = data?.pagination || { total: 0, page: 1, limit: 10, pages: 1 };
 

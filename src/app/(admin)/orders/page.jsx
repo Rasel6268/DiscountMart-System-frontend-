@@ -2,6 +2,7 @@
 import api from '@/config/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
+import { FaPalette, FaMale, FaFemale, FaChild, FaVenusMars } from 'react-icons/fa';
 
 const AdminOrderPage = () => {
     const queryClient = useQueryClient();
@@ -11,6 +12,23 @@ const AdminOrderPage = () => {
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [newStatus, setNewStatus] = useState('');
     const [statusNote, setStatusNote] = useState('');
+
+    // Format price in BDT (Taka)
+    const formatPriceBDT = (price) => {
+        if (!price) return "৳0";
+        return `৳${Math.round(price).toLocaleString("en-US")}`;
+    };
+
+    // Get size type icon
+    const getSizeTypeIcon = (type) => {
+        if (!type) return <FaVenusMars className="text-purple-500" />;
+        switch(type) {
+            case 'men': return <FaMale className="text-blue-500" />;
+            case 'women': return <FaFemale className="text-pink-500" />;
+            case 'kids': return <FaChild className="text-green-500" />;
+            default: return <FaVenusMars className="text-purple-500" />;
+        }
+    };
 
     // Fetch orders
     const { data: orders, isLoading, isError, refetch } = useQuery({
@@ -152,7 +170,7 @@ const AdminOrderPage = () => {
                 </div>
                 <div className="bg-white rounded-lg shadow p-4">
                     <div className="text-sm text-gray-600">Total Revenue</div>
-                    <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">{formatPriceBDT(stats.totalRevenue)}</div>
                 </div>
             </div>
 
@@ -240,7 +258,7 @@ const AdminOrderPage = () => {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900">${order.total?.toFixed(2)}</div>
+                                    <div className="text-sm font-medium text-gray-900">{formatPriceBDT(order.total)}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.orderStatus)}`}>
@@ -392,20 +410,55 @@ const AdminOrderPage = () => {
                                     {selectedOrder.items?.map((item, index) => (
                                         <div key={item._id || index} className="border rounded-lg p-4">
                                             <div className="flex gap-4">
-                                                <img 
-                                                    src={item.image} 
-                                                    alt={item.name}
-                                                    className="w-24 h-24 object-cover rounded"
-                                                />
+                                                {item.image && (
+                                                    <img 
+                                                        src={item.image} 
+                                                        alt={item.name}
+                                                        className="w-24 h-24 object-cover rounded"
+                                                    />
+                                                )}
                                                 <div className="flex-1">
                                                     <h4 className="font-semibold">{item.name}</h4>
                                                     <p className="text-sm text-gray-600">SKU: {item.sku}</p>
-                                                    <p className="text-sm text-gray-600">Size: {item.size?.name || 'N/A'}</p>
-                                                    <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
-                                                    <p className="text-sm text-gray-600">Unit Price: ${item.price.toFixed(2)}</p>
+                                                    
+                                                    {/* Size Information */}
+                                                    {item.size && (
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            {getSizeTypeIcon(item.size.type)}
+                                                            <span className="text-xs bg-blue-100 px-2 py-0.5 rounded-full text-blue-700 font-medium">
+                                                                Size: {item.size.name}
+                                                            </span>
+                                                            {item.size.extraPrice > 0 && (
+                                                                <span className="text-xs text-green-600">
+                                                                    +{formatPriceBDT(item.size.extraPrice)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {/* Color Information */}
+                                                    {item.color && (
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <FaPalette className="text-xs text-pink-500" />
+                                                            <span className="text-xs bg-pink-100 px-2 py-0.5 rounded-full text-pink-700 font-medium">
+                                                                Color: {item.color.name}
+                                                            </span>
+                                                            {item.color.hexCode && (
+                                                                <div 
+                                                                    className="w-4 h-4 rounded-full border border-gray-300"
+                                                                    style={{ backgroundColor: item.color.hexCode }}
+                                                                    title={item.color.name}
+                                                                />
+                                                            )}
+                                                
+                                                        </div>
+                                                    )}
+                                                    
+                                                    <p className="text-sm text-gray-600 mt-1">Quantity: {item.quantity}</p>
+                                                    <p className="text-sm text-gray-600">Unit Price: {formatPriceBDT(item.price)}</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="font-semibold text-lg">${item.totalPrice.toFixed(2)}</p>
+                                                    <p className="font-semibold text-lg">{formatPriceBDT(item.totalPrice)}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -420,31 +473,31 @@ const AdminOrderPage = () => {
                                     <div className="space-y-2">
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Subtotal:</span>
-                                            <span className="font-medium">${selectedOrder.subtotal?.toFixed(2)}</span>
+                                            <span className="font-medium">{formatPriceBDT(selectedOrder.subtotal)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Shipping Cost:</span>
-                                            <span className="font-medium">${selectedOrder.shippingCost?.toFixed(2)}</span>
+                                            <span className="font-medium">{formatPriceBDT(selectedOrder.shippingCost)}</span>
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-gray-600">Tax:</span>
-                                            <span className="font-medium">${selectedOrder.tax?.toFixed(2)}</span>
+                                            <span className="font-medium">{formatPriceBDT(selectedOrder.tax)}</span>
                                         </div>
                                         {selectedOrder.discount > 0 && (
                                             <div className="flex justify-between text-green-600">
                                                 <span>Discount:</span>
-                                                <span>-${selectedOrder.discount.toFixed(2)}</span>
+                                                <span>-{formatPriceBDT(selectedOrder.discount)}</span>
                                             </div>
                                         )}
                                         {selectedOrder.couponDiscount > 0 && (
                                             <div className="flex justify-between text-green-600">
                                                 <span>Coupon Discount:</span>
-                                                <span>-${selectedOrder.couponDiscount.toFixed(2)}</span>
+                                                <span>-{formatPriceBDT(selectedOrder.couponDiscount)}</span>
                                             </div>
                                         )}
                                         <div className="flex justify-between pt-2 border-t mt-2">
                                             <span className="font-bold text-lg">Total:</span>
-                                            <span className="font-bold text-lg">${selectedOrder.total?.toFixed(2)}</span>
+                                            <span className="font-bold text-lg">{formatPriceBDT(selectedOrder.total)}</span>
                                         </div>
                                     </div>
                                 </div>

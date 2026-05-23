@@ -208,7 +208,7 @@ const Shop = () => {
   }, [selectedFilters, sortBy, searchTerm, currentPage]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50">
+    <div className="min-h-screen bg-linear-to-br from-amber-50 via-white to-amber-50">
       {/* Search & Filter Bar */}
       <div className="sticky top-0 z-40 bg-white shadow-lg border-b border-amber-100">
         <div className="w-11/12 mx-auto px-4 py-4">

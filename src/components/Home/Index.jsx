@@ -321,8 +321,8 @@ const Home = () => {
                 key={product._id || product.id}
                 className="bg-white rounded-2xl shadow-lg hover:shadow-2xl border border-amber-100 transition-all duration-300 group flex flex-col h-full"
               >
-                <div className="relative overflow-hidden rounded-t-2xl">
-                  <div className="aspect-4/3 w-full">
+                <Link href={`/shop/${product._id}`}>
+                  <div className="aspect-4/3 w-full cursor-pointer">
                     <Image
                       src={
                         product.images?.[0]?.url || "/placeholder-product.jpg"
@@ -333,28 +333,7 @@ const Home = () => {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
-                  <div className="absolute top-2 right-2 flex gap-1">
-                    {product.isPremium && (
-                      <span className="bg-amber-600 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <FaFire className="text-[8px]" /> PREMIUM
-                      </span>
-                    )}
-                    {product.discountPercentage > 0 && (
-                      <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">
-                        -{Math.round(product.discountPercentage)}%
-                      </span>
-                    )}
-                  </div>
-                  {product.trackInventory &&
-                    product.quantity <= product.lowStockThreshold &&
-                    product.quantity > 0 && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/60 to-transparent p-3">
-                        <span className="text-white text-xs flex items-center gap-1">
-                          <FaClock /> Only {product.quantity} left
-                        </span>
-                      </div>
-                    )}
-                </div>
+                </Link>
 
                 <div className="p-4 md:p-5 flex flex-col grow">
                   <h3 className="font-semibold text-amber-900 text-base md:text-lg line-clamp-1 mb-1">
@@ -551,8 +530,8 @@ const Home = () => {
                 key={product._id || product.id}
                 className="bg-white rounded-xl md:rounded-2xl shadow-md hover:shadow-xl border border-amber-100 transition-all duration-300 group flex flex-col h-full"
               >
-                <div className="relative overflow-hidden rounded-t-xl">
-                  <div className="aspect-4/3 w-full">
+                 <Link href={`/shop/${product._id}`}>
+                  <div className="aspect-4/3 w-full cursor-pointer">
                     <Image
                       src={
                         product.images?.[0]?.url || "/placeholder-product.jpg"
@@ -563,19 +542,7 @@ const Home = () => {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
-                  <div className="absolute top-2 right-2 flex gap-1">
-                    {product.isBest && (
-                      <span className="bg-amber-600 text-white text-[10px] px-2 py-0.5 rounded-full">
-                        BESTSELLER
-                      </span>
-                    )}
-                    {product.discountPercentage > 0 && (
-                      <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">
-                        -{Math.round(product.discountPercentage)}%
-                      </span>
-                    )}
-                  </div>
-                </div>
+                </Link>
 
                 <div className="p-4 md:p-5 flex flex-col grow">
                   <h3 className="font-semibold text-amber-900 text-sm md:text-base line-clamp-1 mb-1">
@@ -704,42 +671,19 @@ const Home = () => {
                 key={product._id || product.id}
                 className="bg-white rounded-xl md:rounded-2xl shadow-md hover:shadow-xl overflow-hidden border border-amber-100 transition-all duration-300 group flex flex-col h-full"
               >
-                <div className="relative">
-                  <div className="aspect-square w-full">
+                 <Link href={`/shop/${product._id}`}>
+                  <div className="aspect-4/3 w-full cursor-pointer">
                     <Image
                       src={
-                        product.images?.[0]?.url || "/placeholder-product.png"
+                        product.images?.[0]?.url || "/placeholder-product.jpg"
                       }
                       alt={product.name}
-                      width={500}
-                      height={500}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      width={600}
+                      height={450}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
-
-                  {/* Discount Badges */}
-                  <div className="absolute top-2 right-2 flex flex-col gap-1">
-                    {product.discountPercentage > 0 && (
-                      <span className="bg-red-500 text-white text-[10px] md:text-xs font-bold px-2 py-1 rounded-full">
-                        -{Math.round(product.discountPercentage)}%
-                      </span>
-                    )}
-                    {product.discountEndDate &&
-                      new Date(product.discountEndDate) > new Date() && (
-                        <span className="bg-amber-600 text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                          {getOfferTag(product)}
-                        </span>
-                      )}
-                  </div>
-
-                  {/* Countdown Timer - Updates every second */}
-                  {product.discountEndDate &&
-                    new Date(product.discountEndDate) > new Date() && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent p-2">
-                        <CountdownTimer endDate={product.discountEndDate} />
-                      </div>
-                    )}
-                </div>
+                </Link>
 
                 <div className="p-3 md:p-4 flex flex-col grow">
                   <div className="flex justify-between items-start mb-1">

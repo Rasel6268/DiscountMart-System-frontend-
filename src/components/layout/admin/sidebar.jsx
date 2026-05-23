@@ -54,6 +54,16 @@ const navigation = [
     ],
   },
   {
+    name: "Product Size & Color", 
+    href: "/product-attributes",
+    icon: <GiLeatherBoot className="text-lg" />,
+    color: "text-yellow-400",
+    subItems: [
+      { name: "Sizes", href: "/product-attributes/sizes", color: "text-yellow-300" },
+      { name: "Colors", href: "/product-attributes/colors", color: "text-yellow-300" },
+    ],
+  },
+  {
     name: "Products",
     href: "/products",
     icon: <FaProductHunt className="text-lg" />,

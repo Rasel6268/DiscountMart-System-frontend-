@@ -211,7 +211,7 @@ const Navbar = () => {
         <Link href="/" className="flex items-center gap-2 group">
           <div>
             <span className="text-sm sm:text-base md:text-lg lg:text-2xl font-bold bg-linear-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-              DiscountMart
+              DiscountStore
             </span>
             <p className="text-[10px] text-amber-500 hidden sm:block">
               Premium Leather & Fusion
@@ -233,13 +233,6 @@ const Navbar = () => {
             className="flex items-center gap-1 text-gray-300 hover:text-amber-400 transition-colors duration-300"
           >
             <FaShoppingCart className="w-4 h-4" /> Shop
-          </Link>
-
-          <Link
-            href="/about"
-            className="flex items-center gap-1 text-gray-300 hover:text-amber-400 transition-colors duration-300"
-          >
-            <FaInfoCircle className="w-4 h-4" /> About
           </Link>
         </nav>
 

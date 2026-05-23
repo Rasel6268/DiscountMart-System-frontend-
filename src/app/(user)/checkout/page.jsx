@@ -1,4 +1,3 @@
-// app/checkout/page.jsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +16,7 @@ import {
   FaFemale,
   FaVenusMars,
   FaChild,
+  FaPalette,
 } from "react-icons/fa";
 import { FaLocationDot } from "react-icons/fa6";
 import { GiHandBag } from "react-icons/gi";
@@ -27,7 +27,7 @@ import api from "@/config/api";
 
 const CheckoutPage = () => {
   const router = useRouter();
-  const { items, getTotalItems, getTotalPrice, clearCart } = useCart();
+  const { items, clearCart } = useCart();
   const { user } = useAuth();
 
   const [loading, setLoading] = useState(false);
@@ -35,28 +35,18 @@ const CheckoutPage = () => {
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
 
-  // Form data
   const [formData, setFormData] = useState({
-    // Personal Info
     name: "",
     email: "",
     phone: "",
-
-    // Address
     addressLine1: "",
     addressLine2: "",
     city: "",
     area: "",
     postCode: "",
     country: "Bangladesh",
-
-    // Shipping Method
     shippingArea: "dhaka",
-
-    // Payment Method
     paymentMethod: "cod",
-
-    // Additional Info
     notes: "",
     saveAddress: false,
     addressName: "",
@@ -65,13 +55,17 @@ const CheckoutPage = () => {
   const [errors, setErrors] = useState({});
   const [selectedAddressId, setSelectedAddressId] = useState(null);
 
-  // Calculate totals
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => {
+    const sizeExtra = item.size?.extraPrice || 0;
+    
+    const itemTotal = (item.price + sizeExtra ) * item.quantity;
+    return sum + itemTotal;
+  }, 0);
+
   const shippingCost = formData.shippingArea === "dhaka" ? 60 : 130;
-  const tax = subtotal * 0.05; // 5% VAT
+  const tax = subtotal * 0.05;
   const total = subtotal + shippingCost + tax;
 
-  // Shipping methods
   const shippingMethods = {
     dhaka: {
       id: "dhaka",
@@ -93,38 +87,32 @@ const CheckoutPage = () => {
 
   const getSizeTypeIcon = (type) => {
     if (!type) return <FaVenusMars className="text-purple-500" />;
-    switch(type) {
-      case 'men': return <FaMale className="text-blue-500" />;
-      case 'women': return <FaFemale className="text-pink-500" />;
-      case 'kids': return <FaChild className="text-green-500" />;
-      default: return <FaVenusMars className="text-purple-500" />;
+    switch (type) {
+      case "men":
+        return <FaMale className="text-blue-500" />;
+      case "women":
+        return <FaFemale className="text-pink-500" />;
+      case "kids":
+        return <FaChild className="text-green-500" />;
+      default:
+        return <FaVenusMars className="text-purple-500" />;
     }
   };
 
   const getSizeTypeLabel = (type) => {
-    if (!type) return 'Unisex';
-    switch(type) {
-      case 'men': return "Men's";
-      case 'women': return "Women's";
-      case 'kids': return "Kids'";
-      default: return 'Unisex';
+    if (!type) return "Unisex";
+    switch (type) {
+      case "men":
+        return "Men's";
+      case "women":
+        return "Women's";
+      case "kids":
+        return "Kids'";
+      default:
+        return "Unisex";
     }
   };
 
-  // Transform cart items
-  const cartItems = items.map((item, index) => ({
-    id: item.productId || `item_${index}`,
-    productId: item.productId,
-    name: item.name,
-    price: item.price,
-    quantity: item.quantity,
-    image: item.image,
-    size: item.size || null,
-    sku: item.sku,
-    originalPrice: item.originalPrice,
-  }));
-
-  // Load saved addresses
   useEffect(() => {
     const loadSavedAddresses = async () => {
       if (user?._id) {
@@ -140,7 +128,6 @@ const CheckoutPage = () => {
     };
     loadSavedAddresses();
 
-    // Pre-fill user data
     if (user) {
       setFormData((prev) => ({
         ...prev,
@@ -153,15 +140,28 @@ const CheckoutPage = () => {
 
   const determineShippingArea = (city, area) => {
     const dhakaAreas = [
-      "dhaka", "dhanmondi", "gulshan", "banani", "uttara", "mirpur",
-      "mohammadpur", "motijheel", "paltan", "ramna", "shahbag", "tejgaon",
-      "badda", "khilgaon", "shyamoli", "farmgate"
+      "dhaka",
+      "dhanmondi",
+      "gulshan",
+      "banani",
+      "uttara",
+      "mirpur",
+      "mohammadpur",
+      "motijheel",
+      "paltan",
+      "ramna",
+      "shahbag",
+      "tejgaon",
+      "badda",
+      "khilgaon",
+      "shyamoli",
+      "farmgate",
     ];
 
     const cityLower = city?.toLowerCase() || "";
     const areaLower = area?.toLowerCase() || "";
 
-    if (cityLower === "dhaka" || dhakaAreas.some(area => areaLower.includes(area))) {
+    if (cityLower === "dhaka" || dhakaAreas.some((area) => areaLower.includes(area))) {
       return "dhaka";
     }
     return "outside_dhaka";
@@ -215,7 +215,6 @@ const CheckoutPage = () => {
 
   const validateStep1 = () => {
     const newErrors = {};
-
     if (!formData.name) newErrors.name = "Full name is required";
     if (!formData.email) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
@@ -281,29 +280,42 @@ const CheckoutPage = () => {
     }
   };
 
-  // COMPLETE ORDER DATA FOR COD
   const handleCODOrder = async () => {
     setLoading(true);
-    
-    try {
-      // Prepare items with totalPrice
-      const orderItems = items.map((item) => ({
-        productId: item.productId,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        image: item.image || null,
-        sku: item.size?.sku || item.sku || null,
-        size: item.size ? {
-          name: item.size.name,
-          type: item.size.type || "unisex",
-          extraPrice: item.size.extraPrice || 0,
-          sku: item.size.sku || null,
-        } : null,
-        totalPrice: (item.price + (item.size?.extraPrice || 0)) * item.quantity,
-      }));
 
-      // Complete order data matching Order model
+    try {
+      const orderItems = items.map((item) => {
+        const sizeExtra = item.size?.extraPrice || 0;
+        
+        const itemTotalPrice = (item.price + sizeExtra ) * item.quantity;
+
+        return {
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image || null,
+          sku: item.size?.sku || item.color?.sku || item.sku || null,
+          size: item.size
+            ? {
+                name: item.size.name,
+                type: item.size.type || "unisex",
+                extraPrice: item.size.extraPrice || 0,
+                sku: item.size.sku || null,
+              }
+            : null,
+          color: item.color
+            ? {
+                _id: item.color._id,
+                name: item.color.name,
+                hexCode: item.color.hexCode || "#000000",
+
+              }
+            : null,
+          totalPrice: itemTotalPrice,
+        };
+      });
+
       const orderData = {
         user: {
           userId: user?._id || null,
@@ -330,16 +342,18 @@ const CheckoutPage = () => {
         couponCode: null,
         tax: tax,
         total: total,
-        paymentMethod: "cod",
+        payment: {
+          method: "cod",
+          status: "pending",
+          amount: total,
+        },
         notes: formData.notes || "",
         ipAddress: null,
-        userAgent: typeof window !== 'undefined' ? navigator.userAgent : null,
+        userAgent: typeof window !== "undefined" ? navigator.userAgent : null,
       };
 
-      console.log("COD Order Data:", JSON.stringify(orderData, null, 2));
-
       const response = await api.post("/orders/cod", orderData);
-      
+
       if (response.data.success) {
         toast.success("Order placed successfully!");
         clearCart();
@@ -349,33 +363,48 @@ const CheckoutPage = () => {
       }
     } catch (error) {
       console.error("COD Order error:", error);
-      toast.error(error.response?.data?.message || error.message || "Failed to place order. Please try again.");
+      toast.error(
+        error.response?.data?.message || error.message || "Failed to place order. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // COMPLETE ORDER DATA FOR SSL
   const initiateSSLPayment = async () => {
     setLoading(true);
-    
+
     try {
-      // Prepare items with totalPrice
-      const orderItems = items.map((item) => ({
-        productId: item.productId,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        image: item.image || null,
-        sku: item.size?.sku || item.sku || null,
-        size: item.size ? {
-          name: item.size.name,
-          type: item.size.type || "unisex",
-          extraPrice: item.size.extraPrice || 0,
-          sku: item.size.sku || null,
-        } : null,
-        totalPrice: (item.price + (item.size?.extraPrice || 0)) * item.quantity,
-      }));
+      const orderItems = items.map((item) => {
+        const sizeExtra = item.size?.extraPrice || 0;
+        
+        const itemTotalPrice = (item.price + sizeExtra ) * item.quantity;
+
+        return {
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image || null,
+          sku: item.size?.sku || item.color?.sku || item.sku || null,
+          size: item.size
+            ? {
+                name: item.size.name,
+                type: item.size.type || "unisex",
+                extraPrice: item.size.extraPrice || 0,
+                sku: item.size.sku || null,
+              }
+            : null,
+          color: item.color
+            ? {
+                _id: item.color._id,
+                name: item.color.name,
+                hexCode: item.color.hexCode || "#000000"
+              }
+            : null,
+          totalPrice: itemTotalPrice,
+        };
+      });
 
       const orderDataForBackend = {
         user: {
@@ -403,10 +432,14 @@ const CheckoutPage = () => {
         couponCode: null,
         tax: tax,
         total: total,
-        paymentMethod: "ssl",
+        payment: {
+          method: "ssl",
+          status: "pending",
+          amount: total,
+        },
         notes: formData.notes || "",
         ipAddress: null,
-        userAgent: typeof window !== 'undefined' ? navigator.userAgent : null,
+        userAgent: typeof window !== "undefined" ? navigator.userAgent : null,
       };
 
       const sslData = {
@@ -441,10 +474,8 @@ const CheckoutPage = () => {
 
       const payload = {
         orderData: orderDataForBackend,
-        ...sslData
+        ...sslData,
       };
-
-      console.log("SSL Payment Payload:", JSON.stringify(payload, null, 2));
 
       const response = await api.post("/payment/ssl-init", payload);
       const data = response.data;
@@ -515,26 +546,11 @@ const CheckoutPage = () => {
               className="w-full px-3 py-2 border rounded-lg"
             />
             <div className="grid grid-cols-2 gap-3">
-              <input
-                name="city"
-                placeholder="City"
-                className="px-3 py-2 border rounded-lg"
-                required
-              />
-              <input
-                name="area"
-                placeholder="Area/Thana"
-                className="px-3 py-2 border rounded-lg"
-                required
-              />
+              <input name="city" placeholder="City" className="px-3 py-2 border rounded-lg" required />
+              <input name="area" placeholder="Area/Thana" className="px-3 py-2 border rounded-lg" required />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <input
-                name="postCode"
-                placeholder="Post Code"
-                className="px-3 py-2 border rounded-lg"
-                required
-              />
+              <input name="postCode" placeholder="Post Code" className="px-3 py-2 border rounded-lg" required />
               <select name="country" className="px-3 py-2 border rounded-lg" required>
                 <option value="Bangladesh">Bangladesh</option>
               </select>
@@ -545,7 +561,11 @@ const CheckoutPage = () => {
             <button type="submit" className="flex-1 bg-amber-500 text-white py-2 rounded-lg hover:bg-amber-600">
               Save Address
             </button>
-            <button type="button" onClick={() => setShowAddAddressModal(false)} className="flex-1 bg-gray-200 py-2 rounded-lg hover:bg-gray-300">
+            <button
+              type="button"
+              onClick={() => setShowAddAddressModal(false)}
+              className="flex-1 bg-gray-200 py-2 rounded-lg hover:bg-gray-300"
+            >
               Cancel
             </button>
           </div>
@@ -577,7 +597,9 @@ const CheckoutPage = () => {
                   <p className="text-sm mt-2 font-medium hidden md:block">{s.name}</p>
                 </div>
                 {s.step < 3 && (
-                  <div className={`absolute top-5 left-1/2 w-full h-0.5 ${step > s.step ? "bg-amber-500" : "bg-gray-300"}`} />
+                  <div
+                    className={`absolute top-5 left-1/2 w-full h-0.5 ${step > s.step ? "bg-amber-500" : "bg-gray-300"}`}
+                  />
                 )}
               </div>
             ))}
@@ -595,7 +617,9 @@ const CheckoutPage = () => {
 
                   {user && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-700">Welcome back, {user.name}! Your information has been pre-filled.</p>
+                      <p className="text-sm text-blue-700">
+                        Welcome back, {user.name}! Your information has been pre-filled.
+                      </p>
                     </div>
                   )}
 
@@ -611,7 +635,12 @@ const CheckoutPage = () => {
                             }`}
                             onClick={() => handleAddressSelect(address)}
                           >
-                            <input type="radio" checked={selectedAddressId === address._id} onChange={() => {}} className="mt-1 text-amber-500" />
+                            <input
+                              type="radio"
+                              checked={selectedAddressId === address._id}
+                              onChange={() => {}}
+                              className="mt-1 text-amber-500"
+                            />
                             <div className="flex-1">
                               <p className="font-medium">{address.name}</p>
                               <p className="text-sm text-gray-600">
@@ -634,7 +663,10 @@ const CheckoutPage = () => {
                           </div>
                         ))}
                       </div>
-                      <button onClick={() => setShowAddAddressModal(true)} className="mt-3 text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1">
+                      <button
+                        onClick={() => setShowAddAddressModal(true)}
+                        className="mt-3 text-sm text-amber-600 hover:text-amber-700 font-medium flex items-center gap-1"
+                      >
                         <FaPlus /> Add New Address
                       </button>
                     </div>
@@ -838,7 +870,9 @@ const CheckoutPage = () => {
                       <label
                         key={method.id}
                         className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition ${
-                          formData.shippingArea === method.id ? "border-amber-500 bg-amber-50" : "border-gray-200 hover:border-amber-300"
+                          formData.shippingArea === method.id
+                            ? "border-amber-500 bg-amber-50"
+                            : "border-gray-200 hover:border-amber-300"
                         }`}
                       >
                         <div className="flex items-center gap-4">
@@ -873,7 +907,10 @@ const CheckoutPage = () => {
                   </div>
 
                   <div className="flex justify-between gap-4">
-                    <button onClick={() => setStep(1)} className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold">
+                    <button
+                      onClick={() => setStep(1)}
+                      className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold"
+                    >
                       ← Back
                     </button>
                     <button
@@ -898,7 +935,9 @@ const CheckoutPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label
                       className={`flex items-start gap-4 p-5 border-2 rounded-xl cursor-pointer transition ${
-                        formData.paymentMethod === "ssl" ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-200 hover:border-amber-300 bg-white"
+                        formData.paymentMethod === "ssl"
+                          ? "border-amber-500 bg-amber-50 shadow-md"
+                          : "border-gray-200 hover:border-amber-300 bg-white"
                       }`}
                     >
                       <input
@@ -914,7 +953,9 @@ const CheckoutPage = () => {
                           <FaShieldAlt className="text-2xl text-blue-600" />
                           <p className="font-bold text-gray-800 text-lg">SSL Commerce</p>
                         </div>
-                        <p className="text-sm text-gray-600">Pay with Credit/Debit Card, bKash, Nagad, Rocket, or Mobile Banking</p>
+                        <p className="text-sm text-gray-600">
+                          Pay with Credit/Debit Card, bKash, Nagad, Rocket, or Mobile Banking
+                        </p>
                         <div className="flex flex-wrap gap-2 mt-3">
                           <span className="text-xs bg-gray-100 px-2 py-1 rounded">Visa</span>
                           <span className="text-xs bg-gray-100 px-2 py-1 rounded">Mastercard</span>
@@ -930,7 +971,9 @@ const CheckoutPage = () => {
 
                     <label
                       className={`flex items-start gap-4 p-5 border-2 rounded-xl cursor-pointer transition ${
-                        formData.paymentMethod === "cod" ? "border-amber-500 bg-amber-50 shadow-md" : "border-gray-200 hover:border-amber-300 bg-white"
+                        formData.paymentMethod === "cod"
+                          ? "border-amber-500 bg-amber-50 shadow-md"
+                          : "border-gray-200 hover:border-amber-300 bg-white"
                       }`}
                     >
                       <input
@@ -964,7 +1007,10 @@ const CheckoutPage = () => {
                   </div>
 
                   <div className="flex justify-between gap-4">
-                    <button onClick={() => setStep(2)} className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold">
+                    <button
+                      onClick={() => setStep(2)}
+                      className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-semibold"
+                    >
                       ← Back
                     </button>
                     <button
@@ -995,40 +1041,61 @@ const CheckoutPage = () => {
               <h2 className="text-xl font-bold text-gray-800 mb-4">Order Summary</h2>
 
               <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
-                {cartItems.map((item, index) => (
-                  <div key={`${item.id}_${index}`} className="flex gap-3">
-                    {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
-                    ) : (
-                      <div className="w-16 h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                        <GiHandBag className="text-3xl text-amber-500" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800 text-sm line-clamp-2">{item.name}</p>
-                      
-                      {item.size && (
-                        <div className="flex items-center gap-1 mt-1 flex-wrap">
-                          <div className="flex items-center gap-0.5">
-                            {getSizeTypeIcon(item.size.type)}
-                            <span className="text-xs text-gray-500">{getSizeTypeLabel(item.size.type)}</span>
-                          </div>
-                          <span className="text-xs bg-amber-100 px-2 py-0.5 rounded-full text-amber-700 font-medium">
-                            Size: {item.size.name}
-                          </span>
-                          {item.size.extraPrice > 0 && (
-                            <span className="text-xs text-green-600">+${item.size.extraPrice}</span>
-                          )}
+                {items.map((item, index) => {
+                  const sizeExtra = item.size?.extraPrice || 0;
+                 
+                  const itemTotalPrice = (item.price + sizeExtra ) * item.quantity;
+
+                  return (
+                    <div key={`${item.productId}_${index}`} className="flex gap-3">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
+                      ) : (
+                        <div className="w-16 h-16 bg-amber-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                          <GiHandBag className="text-3xl text-amber-500" />
                         </div>
                       )}
-                      
-                      <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                        <p className="text-sm font-semibold text-amber-600">${(item.price * item.quantity).toFixed(2)}</p>
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-800 text-sm line-clamp-2">{item.name}</p>
+
+                        {item.size && (
+                          <div className="flex items-center gap-1 mt-1 flex-wrap">
+                            <div className="flex items-center gap-0.5">
+                              {getSizeTypeIcon(item.size.type)}
+                              <span className="text-xs text-gray-500">{getSizeTypeLabel(item.size.type)}</span>
+                            </div>
+                            <span className="text-xs bg-amber-100 px-2 py-0.5 rounded-full text-amber-700 font-medium">
+                              Size: {item.size.name}
+                            </span>
+                            {item.size.extraPrice > 0 && <span className="text-xs text-green-600">+৳{item.size.extraPrice}</span>}
+                          </div>
+                        )}
+
+                        {item.color && (
+                          <div className="flex items-center gap-1 mt-1 flex-wrap">
+                            <div className="flex items-center gap-0.5">
+                              <FaPalette className="text-pink-500 text-xs" />
+                              <span className="text-xs text-gray-500">Color:</span>
+                            </div>
+                            <span className="text-xs bg-pink-100 px-2 py-0.5 rounded-full text-pink-700 font-medium flex items-center gap-1">
+                              <span
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: item.color.hexCode || "#CCCCCC" }}
+                              />
+                              {item.color.name}
+                            </span>
+                            {item.color.extraPrice > 0 && <span className="text-xs text-green-600">+৳{item.color.extraPrice}</span>}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                          <p className="text-sm font-semibold text-amber-600">৳{itemTotalPrice.toFixed(2)}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="border-t border-gray-200 pt-4 space-y-2">
