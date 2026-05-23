@@ -68,7 +68,7 @@ const Footer = () => {
                 className="w-10 h-10 object-contain"
               />
               <span className="text-xl font-bold bg-linear-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-                AIS DiscountMart
+                DiscountStore
               </span>
             </Link>
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
@@ -173,7 +173,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center gap-3">
                 <MdEmail className="text-amber-400 text-lg" />
-                <p className="text-gray-400 text-sm">support@aisdiscountmart.com</p>
+                <p className="text-gray-400 text-sm">support@discountStore.com</p>
               </div>
               <div className="flex items-center gap-3">
                 <MdAccessTime className="text-amber-400 text-lg" />
@@ -226,7 +226,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             {/* Copyright */}
             <div className="text-gray-400 text-sm text-center md:text-left">
-              © {currentYear} AIS DiscountMart. All rights reserved.
+              © {currentYear} DiscountStore. All rights reserved.
             </div>
 
             {/* Payment Methods */}
