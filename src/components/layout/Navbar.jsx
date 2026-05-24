@@ -211,7 +211,7 @@ const Navbar = () => {
         <Link href="/" className="flex items-center gap-2 group">
           <div>
             <span className="text-sm sm:text-base md:text-lg lg:text-2xl font-bold bg-linear-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-              DiscountStore
+              discountstorebd
             </span>
             <p className="text-[10px] text-amber-500 hidden sm:block">
               Premium Leather & Fusion
