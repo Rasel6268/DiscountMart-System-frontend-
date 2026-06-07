@@ -2,6 +2,7 @@
 import api from '@/config/api';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { FaPalette, FaMale, FaFemale, FaChild, FaVenusMars } from 'react-icons/fa';
 
 const AdminOrderPage = () => {
@@ -45,10 +46,11 @@ const AdminOrderPage = () => {
     // Update order status mutation
     const updateStatusMutation = useMutation({
         mutationFn: async ({ orderId, status, note }) => {
-            const res = await api.put(`/orders/${orderId}/status`, { status, note });
+            const res = await api.put(`/orders/update-status/${orderId}`, { status, note });
             return res.data;
         },
         onSuccess: () => {
+            toast.success('Order status updated successfully!');
             queryClient.invalidateQueries(['admin-orders']);
             setShowStatusModal(false);
             setSelectedOrder(null);
