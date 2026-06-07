@@ -4,6 +4,7 @@ import AuthProvider from "@/AuthProvider/AuthProvider";
 
 import { DM_Sans } from "next/font/google";
 import Providers from "./providers/QueryProvider";
+import { ThemeProvider } from "@/AuthProvider/ThemeContext";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -71,12 +72,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={dmSans.className}>
+        <ThemeProvider>
         <Providers>
           <AuthProvider>
             {children}
             <Toaster position="top-right" />
           </AuthProvider>
         </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

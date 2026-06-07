@@ -8,6 +8,8 @@ import {
   FaSearch,
   FaShoppingCart,
   FaHeart,
+  FaSun,
+  FaMoon,
 } from "react-icons/fa";
 import { FcAbout } from "react-icons/fc";
 import Link from "next/link";
@@ -26,6 +28,8 @@ import { useWishlist } from "@/hooks/useWishlist";
 import Marquee from "react-fast-marquee";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useTheme } from "@/AuthProvider/ThemeContext";
+
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,6 +43,7 @@ const Navbar = () => {
   const { getTotalItems, items: cartItems } = useCart();
   const { getWishlistCount, wishlistItems } = useWishlist();
   const router = useRouter();
+  const { theme, toggleTheme, mounted: themeMounted } = useTheme();
 
   // Handle mounting to avoid hydration mismatches
   useEffect(() => {
@@ -103,7 +108,7 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-linear-to-r from-gray-900 to-gray-800 shadow-2xl">
+    <header className="sticky top-0 z-50 bg-white dark:bg-blue-950 shadow-2xl transition-colors duration-300">
       {/* Announcement Bar */}
       <Marquee
         pauseOnHover={true}
@@ -223,14 +228,14 @@ const Navbar = () => {
         <nav className="hidden lg:flex items-center gap-8 font-medium">
           <Link
             href="/"
-            className="flex items-center gap-1 text-gray-300 hover:text-amber-400 transition-colors duration-300"
+            className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300"
           >
             <House className="w-4 h-4" /> Home
           </Link>
 
           <Link
             href="/shop"
-            className="flex items-center gap-1 text-gray-300 hover:text-amber-400 transition-colors duration-300"
+            className="flex items-center gap-1 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300"
           >
             <FaShoppingCart className="w-4 h-4" /> Shop
           </Link>
@@ -239,16 +244,30 @@ const Navbar = () => {
         {/* Right Actions */}
         <div className="flex items-center gap-3 md:gap-4">
           {/* Search Icon */}
-          <button className="hidden md:flex p-2 text-gray-300 hover:text-amber-400 transition-colors duration-300">
+          <button className="hidden md:flex p-2 text-gray-700 dark:text-gray-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors duration-300">
             <FaSearch className="text-lg" />
           </button>
+
+          {/* Theme Toggle Button */}
+          {themeMounted && (
+            <button
+              onClick={toggleTheme}
+              className="relative p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 group"
+              aria-label="Toggle theme"
+            >
+              <div className="relative w-5 h-5">
+                <FaSun className={`absolute inset-0 text-yellow-500 transition-all duration-300 ${theme === 'dark' ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90'}`} />
+                <FaMoon className={`absolute inset-0 text-gray-700 dark:text-gray-300 transition-all duration-300 ${theme === 'light' ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90'}`} />
+              </div>
+            </button>
+          )}
 
           {/* Wishlist */}
           <Link href="/wishlist" className="relative group">
             {mounted && wishlistCount > 0 ? (
               <FaHeart className="text-xl text-red-500 group-hover:text-red-600 transition-colors duration-300" />
             ) : (
-              <FaRegHeart className="text-xl text-gray-300 group-hover:text-red-500 transition-colors duration-300" />
+              <FaRegHeart className="text-xl text-gray-700 dark:text-gray-300 group-hover:text-red-500 transition-colors duration-300" />
             )}
             {mounted && wishlistCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse">
@@ -259,14 +278,14 @@ const Navbar = () => {
 
           {/* Cart */}
           <Link href="/cart" className="relative group">
-            <AiOutlineShoppingCart className="text-xl text-gray-300 group-hover:text-amber-400 transition-colors duration-300" />
+            <AiOutlineShoppingCart className="text-xl text-gray-700 dark:text-gray-300 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors duration-300" />
             {mounted && cartCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg animate-bounce">
                 {cartCount > 9 ? "9+" : cartCount}
               </span>
             )}
             {mounted && cartCount === 0 && (
-              <span className="absolute -top-2 -right-2 bg-gray-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg">
+              <span className="absolute -top-2 -right-2 bg-gray-400 dark:bg-gray-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-lg">
                 0
               </span>
             )}
@@ -287,18 +306,18 @@ const Navbar = () => {
               </button>
 
               {openUserModel && (
-                <div className="absolute right-0 mt-2 w-72 bg-gray-800 shadow-2xl rounded-xl border border-gray-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="bg-linear-to-r from-amber-900/50 to-gray-800 p-4 border-b border-gray-700 flex items-center gap-3">
+                <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 shadow-2xl rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="bg-linear-to-r from-amber-50 to-white dark:from-amber-900/50 dark:to-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
                     <img
                       src={user.avatar || "/user-avatar.jpg"}
                       alt="User Avatar"
                       className="w-12 h-12 rounded-full object-cover border-2 border-amber-500 shadow-sm"
                     />
                     <div className="truncate">
-                      <h2 className="font-semibold text-white truncate">
+                      <h2 className="font-semibold text-gray-900 dark:text-white truncate">
                         {user.name || user.fullName || "John Doe"}
                       </h2>
-                      <p className="text-sm text-gray-400 truncate">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                         {user.email || "john.doe@example.com"}
                       </p>
                     </div>
@@ -306,7 +325,7 @@ const Navbar = () => {
                   <div className="py-2">
                     <Link
                       href="/profile"
-                      className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 transition"
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/20 hover:text-amber-600 dark:hover:text-amber-400 transition"
                       onClick={() => setOpenUserModel(false)}
                     >
                       <User className="w-5 h-5" />
@@ -314,7 +333,7 @@ const Navbar = () => {
                     </Link>
                     <Link
                       href="/orders"
-                      className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 transition"
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/20 hover:text-amber-600 dark:hover:text-amber-400 transition"
                       onClick={() => setOpenUserModel(false)}
                     >
                       <ShoppingBag className="w-5 h-5" />
@@ -322,7 +341,7 @@ const Navbar = () => {
                     </Link>
                     <Link
                       href="/wishlist"
-                      className="flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 transition"
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/20 hover:text-amber-600 dark:hover:text-amber-400 transition"
                       onClick={() => setOpenUserModel(false)}
                     >
                       <FaRegHeart className="w-5 h-5" />
@@ -336,11 +355,11 @@ const Navbar = () => {
                     <button
                       onClick={handleLogout}
                       disabled={isLoggingOut}
-                      className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/20 hover:text-red-300 w-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-700 dark:hover:text-red-300 w-full transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoggingOut ? (
                         <>
-                          <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-5 h-5 border-2 border-red-600 dark:border-red-400 border-t-transparent rounded-full animate-spin"></div>
                           Logging out...
                         </>
                       ) : (
@@ -357,7 +376,7 @@ const Navbar = () => {
             <div className="hidden lg:flex gap-2">
               <Link
                 href="/auth/login"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 transition-all duration-300"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/20 hover:text-amber-600 dark:hover:text-amber-400 transition-all duration-300"
               >
                 <LogIn className="w-4 h-4" /> Login
               </Link>
@@ -373,12 +392,12 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
-            className="lg:hidden p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-all duration-300"
+            className="lg:hidden p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300"
           >
             {isMenuOpen ? (
-              <IoIosClose className="text-2xl text-white" />
+              <IoIosClose className="text-2xl text-gray-900 dark:text-white" />
             ) : (
-              <IoIosMenu className="text-2xl text-white" />
+              <IoIosMenu className="text-2xl text-gray-900 dark:text-white" />
             )}
           </button>
         </div>
@@ -386,21 +405,46 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-gray-800 shadow-2xl border-t border-gray-700 absolute w-full z-40 left-0 top-full animate-in slide-in-from-top-2 duration-200">
+        <div className="lg:hidden bg-white dark:bg-gray-800 shadow-2xl border-t border-gray-200 dark:border-gray-700 absolute w-full z-40 left-0 top-full animate-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-2 p-4 max-h-[80vh] overflow-y-auto">
             {/* Search Bar */}
             <div className="relative mb-2">
               <input
                 type="text"
                 placeholder="Search products..."
-                className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:border-amber-500"
+                className="w-full px-4 py-2 pr-10 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-500"
               />
               <FaSearch className="absolute right-3 top-3 text-gray-400" />
             </div>
 
+            {/* Theme Toggle in Mobile Menu */}
+            {themeMounted && (
+              <button
+                onClick={toggleTheme}
+                className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
+              >
+                <div className="flex items-center gap-3">
+                  {theme === "dark" ? (
+                    <>
+                      <FaSun className="w-4 h-4 text-yellow-500" />
+                      Light Mode
+                    </>
+                  ) : (
+                    <>
+                      <FaMoon className="w-4 h-4" />
+                      Dark Mode
+                    </>
+                  )}
+                </div>
+                <span className="text-sm">
+                  {theme === "dark" ? "Switch to Light" : "Switch to Dark"}
+                </span>
+              </button>
+            )}
+
             <Link
               href="/"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
               onClick={toggleMobileMenu}
             >
               <House className="w-4 h-4" /> Home
@@ -408,7 +452,7 @@ const Navbar = () => {
 
             {/* Categories Section */}
             <div className="px-4 py-2">
-              <h3 className="text-amber-400 text-sm font-semibold mb-2">
+              <h3 className="text-amber-600 dark:text-amber-400 text-sm font-semibold mb-2">
                 Categories
               </h3>
               <div className="grid grid-cols-2 gap-2">
@@ -416,11 +460,11 @@ const Navbar = () => {
                   <Link
                     key={category.name}
                     href={category.href}
-                    className="flex justify-between items-center px-3 py-2 rounded-lg bg-gray-700/50 text-gray-300 hover:bg-amber-500/20 hover:text-amber-400 transition text-sm"
+                    className="flex justify-between items-center px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/20 hover:text-amber-600 dark:hover:text-amber-400 transition text-sm"
                     onClick={toggleMobileMenu}
                   >
                     <span>{category.name}</span>
-                    <span className="text-xs text-amber-500">
+                    <span className="text-xs text-amber-600 dark:text-amber-500">
                       {category.count}
                     </span>
                   </Link>
@@ -430,7 +474,7 @@ const Navbar = () => {
 
             <Link
               href="/shop"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
               onClick={toggleMobileMenu}
             >
               <ShoppingBag className="w-4 h-4" /> All Products
@@ -438,7 +482,7 @@ const Navbar = () => {
 
             <Link
               href="/about"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
               onClick={toggleMobileMenu}
             >
               <FcAbout className="w-4 h-4" /> About
@@ -447,7 +491,7 @@ const Navbar = () => {
             {/* Cart in Mobile Menu */}
             <Link
               href="/cart"
-              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
               onClick={toggleMobileMenu}
             >
               <div className="flex items-center gap-3">
@@ -464,7 +508,7 @@ const Navbar = () => {
             {/* Wishlist in Mobile Menu */}
             <Link
               href="/wishlist"
-              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
               onClick={toggleMobileMenu}
             >
               <div className="flex items-center gap-3">
@@ -483,32 +527,32 @@ const Navbar = () => {
             </Link>
 
             {user ? (
-              <div className="mt-2 border-t border-gray-700 pt-2 flex flex-col gap-2">
-                <div className="flex items-center gap-3 px-4 py-2 bg-gray-700/50 rounded-xl">
+              <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2 flex flex-col gap-2">
+                <div className="flex items-center gap-3 px-4 py-2 bg-gray-100 dark:bg-gray-700/50 rounded-xl">
                   <img
                     src={user.avatar || "/user-avatar.jpg"}
                     alt="User Avatar"
                     className="w-10 h-10 rounded-full object-cover border-2 border-amber-500"
                   />
                   <div>
-                    <h3 className="font-semibold text-white">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
                       {user.name || user.fullName || "John Doe"}
                     </h3>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {user.email || "john.doe@example.com"}
                     </p>
                   </div>
                 </div>
                 <Link
                   href="/profile"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
                   onClick={toggleMobileMenu}
                 >
                   <User className="w-4 h-4" /> My Profile
                 </Link>
                 <Link
                   href="/orders"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
                   onClick={toggleMobileMenu}
                 >
                   <ShoppingBag className="w-4 h-4" /> My Orders
@@ -516,11 +560,11 @@ const Navbar = () => {
                 <button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-red-500/20 text-red-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoggingOut ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-4 h-4 border-2 border-red-600 dark:border-red-400 border-t-transparent rounded-full animate-spin"></div>
                       Logging out...
                     </>
                   ) : (
@@ -531,17 +575,17 @@ const Navbar = () => {
                 </button>
               </div>
             ) : (
-              <div className="mt-2 border-t border-gray-700 pt-2 flex flex-col gap-2">
+              <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2 flex flex-col gap-2">
                 <Link
                   href="/auth/login"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-500/20 text-gray-300 hover:text-amber-400 transition"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
                   onClick={toggleMobileMenu}
                 >
                   <LogIn className="w-4 h-4" /> Login
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition text-center justify-center"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition text-center justify-center"
                   onClick={toggleMobileMenu}
                 >
                   <UserRoundPlus className="w-4 h-4" /> Register
