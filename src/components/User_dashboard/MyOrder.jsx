@@ -4,6 +4,7 @@ import api from '@/config/api';
 import { useAuth } from '@/AuthProvider/AuthProvider';
 import { FaEye, FaBoxOpen, FaClock, FaCheckCircle, FaTimesCircle, FaTruck, FaRupeeSign, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { toast, Toaster } from 'react-hot-toast';
+import ProtectedRoute from '../ProtectedRoute';
 
 const MyOrder = () => {
     const { user } = useAuth();
@@ -183,7 +184,8 @@ const MyOrder = () => {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+       <ProtectedRoute>
+         <div className="container mx-auto px-4 py-8 max-w-6xl">
             <Toaster 
                 position="top-right"
                 toastOptions={{
@@ -581,6 +583,7 @@ const MyOrder = () => {
                 </div>
             )}
         </div>
+       </ProtectedRoute>
     );
 };
 
