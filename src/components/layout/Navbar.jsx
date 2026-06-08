@@ -331,27 +331,7 @@ const Navbar = () => {
                       <User className="w-5 h-5" />
                       My Profile
                     </Link>
-                    <Link
-                      href="/orders"
-                      className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/20 hover:text-amber-600 dark:hover:text-amber-400 transition"
-                      onClick={() => setOpenUserModel(false)}
-                    >
-                      <ShoppingBag className="w-5 h-5" />
-                      My Orders
-                    </Link>
-                    <Link
-                      href="/wishlist"
-                      className="flex items-center gap-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-amber-50 dark:hover:bg-amber-500/20 hover:text-amber-600 dark:hover:text-amber-400 transition"
-                      onClick={() => setOpenUserModel(false)}
-                    >
-                      <FaRegHeart className="w-5 h-5" />
-                      Wishlist
-                      {wishlistCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                          {wishlistCount}
-                        </span>
-                      )}
-                    </Link>
+                    
                     <button
                       onClick={handleLogout}
                       disabled={isLoggingOut}
@@ -505,26 +485,6 @@ const Navbar = () => {
               )}
             </Link>
 
-            {/* Wishlist in Mobile Menu */}
-            <Link
-              href="/wishlist"
-              className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-              onClick={toggleMobileMenu}
-            >
-              <div className="flex items-center gap-3">
-                {mounted && wishlistCount > 0 ? (
-                  <FaHeart className="w-4 h-4 text-red-500" />
-                ) : (
-                  <FaRegHeart className="w-4 h-4" />
-                )}
-                Wishlist
-              </div>
-              {mounted && wishlistCount > 0 && (
-                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
 
             {user ? (
               <div className="mt-2 border-t border-gray-200 dark:border-gray-700 pt-2 flex flex-col gap-2">
@@ -549,13 +509,6 @@ const Navbar = () => {
                   onClick={toggleMobileMenu}
                 >
                   <User className="w-4 h-4" /> My Profile
-                </Link>
-                <Link
-                  href="/orders"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-500/20 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400 transition"
-                  onClick={toggleMobileMenu}
-                >
-                  <ShoppingBag className="w-4 h-4" /> My Orders
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -585,7 +538,7 @@ const Navbar = () => {
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition text-center justify-center"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 transition text-center justify-center"
                   onClick={toggleMobileMenu}
                 >
                   <UserRoundPlus className="w-4 h-4" /> Register

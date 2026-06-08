@@ -15,7 +15,7 @@ const AdminRoute = ({ children }) => {
       if (!user) {
         router.push(`/user/login?redirect=${encodeURIComponent(pathname)}`);
       } else if (user.role !== 'admin') {
-        router.push('/'); // or access denied page
+        router.push('/');
       }
     }
   }, [user, loading, router, pathname]);

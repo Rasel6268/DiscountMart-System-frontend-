@@ -40,7 +40,6 @@ const AdminUsersPage = () => {
     const updateUserRoleMutation = useMutation({
         mutationFn: async ({ userId, role }) => {
             const res = await api.put(`/auth/make-admin/${userId}`, { role });
-            console.log("Update role response:", res.data);
             return res.data;
         },
         onSuccess: (data) => {
