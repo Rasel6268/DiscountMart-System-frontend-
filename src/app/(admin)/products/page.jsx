@@ -37,9 +37,9 @@ const ProductsPage = () => {
     minPrice: '',
     maxPrice: '',
     isOnSale: '',
-    isPremium: '',      // Added premium filter
-    isBest: '',         // Added best seller filter
-    isFeatured: '',     // Added featured filter
+    isPremium: '',     
+    isBest: '',         
+    isFeatured: '',  
     page: 1,
     limit: 10
   });
